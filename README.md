@@ -3,9 +3,13 @@
 DIAYN
 
 we can learn lots of skills which can be base of unsupervised meta learning
-this paper use prior term to avoid model collapse. which can reduce number of skills very much. ex) vic
+
+this paper use fixed prior term to avoid model collapse. which can reduce number of skills very much. ex) vic
+
 this paper use sac to make policy to search extensively and sac can make policy to avoid distributional shift problem.
+
 but i don't know if sac is necessary because we already maximize IG from state.
+
 below is rough process of diayn
 
 $$1. \ sample \ skill \ from \ p(z)$$
