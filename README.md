@@ -29,7 +29,6 @@ $$6. \ update \ sac \ with \ policy \ z \ to \ maximize \ reward$$
 * cartpole
 * hopper
 
-* * *
 
 ## Requirements
 
@@ -39,7 +38,6 @@ $$6. \ update \ sac \ with \ policy \ z \ to \ maximize \ reward$$
 * Pytorch >= 1.12.0
 * Numpy
 
-* * *
 
 ## REPO
 
