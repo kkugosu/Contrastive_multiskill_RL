@@ -1,6 +1,6 @@
 # RL_META
 
-DIAYN
+## Algorithm DIAYN
 
 we can learn lots of skills which can be base of unsupervised meta learning
 
@@ -24,9 +24,23 @@ $$5. \ set \ reward \ as \ log(q_\phi(z | s_t)) - log(p(z))$$
 
 $$6. \ update \ sac \ with \ policy \ z \ to \ maximize \ reward$$
 
+## Experiment environment
+
+* cartpole
+* hopper
 
 * * *
 
-REPO
+## Requirements
+
+* Gym
+* Mujoco
+* Python >= 3.8 
+* Pytorch >= 1.12.0
+* Numpy
+
+* * *
+
+## REPO
 
 https://arxiv.org/pdf/1802.06070.pdf
