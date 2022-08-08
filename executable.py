@@ -1,4 +1,4 @@
-from control import gps
+from control import gps, AC, DDPG, PG, PPO, SAC, TRPO
 from utils import render
 
 if __name__ == "__main__":
@@ -128,14 +128,8 @@ if __name__ == "__main__":
                 TRAIN_ITER, MEMORY_ITER, control, env_name, e_trace, precision, done_penalty]
     print(arg_list)
 
-    """
-        if control == "PG":
+    if control == "PG":
         mechanism = PG.PGPolicy(*arg_list)
-        mechanism.training(load=load_)
-        policy = mechanism.get_policy()
-
-    elif control == "DQN":
-        mechanism = DQN.DQNPolicy(*arg_list)
         mechanism.training(load=load_)
         policy = mechanism.get_policy()
 
@@ -166,8 +160,8 @@ if __name__ == "__main__":
         mechanism = SAC.SACPolicy(*arg_list)
         mechanism.training(load=load_)
         policy = mechanism.get_policy()
-    """
-    if control == "gps":
+
+    elif control == "gps":
         mechanism = gps.GPS(*arg_list)
         mechanism.training(load=load_)
         policy = mechanism.get_policy()

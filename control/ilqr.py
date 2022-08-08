@@ -24,6 +24,7 @@ class IterativeLQG:
         self.sl = sl
         self.al = al
         self.if_conv = 0
+        self.lamb = 1
         self.NAF_R = naf_r
         self.NAF_P = naf_p
         self.b_s = b_s
@@ -117,7 +118,7 @@ class IterativeLQG:
                 _F[j] = jacobian(self.dyn, sa_in[i][j])
                 j = j + 1
 
-            print("loopend so time consumming")
+            print("loop end..")
             _transF = torch.transpose(_F, -2, -1)
             _Q = _C + torch.matmul(torch.matmul(_transF, _V), _F)
 
@@ -171,7 +172,8 @@ class IterativeLQG:
         self.S[0] = state
         _C = None
         i = 0
-        while (self.if_conv != 1) and i < 3:
+        while (self.if_conv != 1) and i < self.ts:
+            # make iteration same as time step
             i = i + 1
             self._forward()
             _C = self._backward()

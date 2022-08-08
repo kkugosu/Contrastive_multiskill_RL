@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import sys
 from torch import nn
-from NeuralNetwork import NN
+from NeuralNetwork import basic_nn
 from utils import buffer
 import random
 import torch.onnx as onnx
@@ -14,16 +14,16 @@ GAMMA = 0.98
 class PPOPolicy(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.updatedPG = NN.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
-        self.basePG = NN.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
-        self.updatedDQN = NN.ValueNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
-        self.baseDQN = NN.ValueNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
-        self.basePG.eval()
-        self.baseDQN.eval()
-        self.policy = policy.Policy(self.cont, self.updatedPG, self.converter)
+        self.upd_policy = basic_nn.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
+        self.base_policy = basic_nn.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
+        self.upd_queue = basic_nn.ValueNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
+        self.base_queue = basic_nn.ValueNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
+        self.base_policy.eval()
+        self.base_queue.eval()
+        self.policy = policy.Policy(self.cont, self.upd_policy, self.converter)
         self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p)
-        self.optimizer_p = torch.optim.SGD(self.updatedPG.parameters(), lr=self.lr)
-        self.optimizer_q = torch.optim.SGD(self.updatedDQN.parameters(), lr=self.lr)
+        self.optimizer_p = torch.optim.SGD(self.upd_policy.parameters(), lr=self.lr)
+        self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss(reduction='mean')
         self.kl_loss = nn.KLDivLoss(reduction="batchmean")
 
@@ -34,12 +34,12 @@ class PPOPolicy(BASE.BasePolicy):
 
         if int(load) == 1:
             print("loading")
-            self.updatedPG.load_state_dict(torch.load(self.PARAM_PATH + "/1.pth"))
-            self.updatedDQN.load_state_dict(torch.load(self.PARAM_PATH + "/2.pth"))
-            self.baseDQN.load_state_dict(self.updatedDQN.state_dict())
-            self.baseDQN.eval()
-            self.basePG.load_state_dict(self.updatedPG.state_dict())
-            self.basePG.eval()
+            self.upd_policy.load_state_dict(torch.load(self.PARAM_PATH + "/1.pth"))
+            self.upd_queue.load_state_dict(torch.load(self.PARAM_PATH + "/2.pth"))
+            self.base_queue.load_state_dict(self.upd_queue.state_dict())
+            self.base_queue.eval()
+            self.base_policy.load_state_dict(self.upd_policy.state_dict())
+            self.base_policy.eval()
             print("loading complete")
         else:
             pass
@@ -53,17 +53,17 @@ class PPOPolicy(BASE.BasePolicy):
             self.writer.add_scalar("pg/loss", pg_loss, i)
             self.writer.add_scalar("dqn/loss", dqn_loss, i)
             self.writer.add_scalar("performance", self.buffer.get_performance(), i)
-            torch.save(self.updatedPG.state_dict(), self.PARAM_PATH + "/1.pth")
-            torch.save(self.updatedDQN.state_dict(), self.PARAM_PATH + '/2.pth')
-            self.baseDQN.load_state_dict(self.updatedDQN.state_dict())
-            self.baseDQN.eval()
-            self.basePG.load_state_dict(self.updatedPG.state_dict())
-            self.basePG.eval()
+            torch.save(self.upd_policy.state_dict(), self.PARAM_PATH + "/1.pth")
+            torch.save(self.upd_queue.state_dict(), self.PARAM_PATH + '/2.pth')
+            self.base_queue.load_state_dict(self.upd_queue.state_dict())
+            self.base_queue.eval()
+            self.base_policy.load_state_dict(self.upd_policy.state_dict())
+            self.base_policy.eval()
 
-        for param in self.updatedDQN.parameters():
+        for param in self.upd_queue.parameters():
             print("----------dqn-------------")
             print(param)
-        for param in self.updatedPG.parameters():
+        for param in self.upd_policy.parameters():
             print("----------pg--------------")
             print(param)
 
@@ -82,45 +82,45 @@ class PPOPolicy(BASE.BasePolicy):
             t_a_index = self.converter.act2index(n_a, self.b_s).unsqueeze(axis=-1)
             t_o = torch.tensor(n_o, dtype=torch.float32).to(self.device)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
-            t_p_weight = torch.gather(self.updatedPG(t_p_o), 1, t_a_index)
-            t_p_base_weight = torch.gather(self.basePG(t_p_o), 1, t_a_index)
+            t_p_weight = torch.gather(self.upd_policy(t_p_o), 1, t_a_index)
+            t_p_base_weight = torch.gather(self.base_policy(t_p_o), 1, t_a_index)
             ratio = t_p_weight/t_p_base_weight
             # at first step, ratio will be 1
-            t_p_qvalue = torch.gather(self.updatedDQN(t_p_o), 1, t_a_index)
+            t_p_qvalue = torch.gather(self.upd_queue(t_p_o), 1, t_a_index)
             weight = torch.transpose(ratio, 0, 1)
 
             # we can restrict result of network by clamp but we can't restrict network parameter which result in fluctuate
             # so we add action kld term like trpo
-            state_entropy_bonus = -torch.sum(torch.log(self.updatedPG(t_p_o)) * self.updatedPG(t_p_o)) / self.b_s
+            state_entropy_bonus = -torch.sum(torch.log(self.upd_policy(t_p_o)) * self.upd_policy(t_p_o)) / self.b_s
             policy_loss = -torch.matmul(weight, t_p_qvalue)/self.b_s - state_entropy_bonus*0.1
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
                 n_a_expect = self.policy.select_action(n_o)
                 t_a_index = self.converter.act2index(n_a_expect, self.b_s).unsqueeze(-1)
-                t_qvalue = torch.gather(self.baseDQN(t_o), 1, t_a_index)
+                t_qvalue = torch.gather(self.base_queue(t_o), 1, t_a_index)
                 t_qvalue = t_qvalue*(GAMMA**t_trace) + t_r.unsqueeze(-1)
 
             queue_loss = self.criterion(t_p_qvalue, t_qvalue)
 
             self.optimizer_p.zero_grad()
             policy_loss.backward(retain_graph=True)
-            for param in self.updatedPG.parameters():
+            for param in self.upd_policy.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_p.step()
 
             self.optimizer_q.zero_grad()
             queue_loss.backward()
-            for param in self.updatedDQN.parameters():
+            for param in self.upd_queue.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_q.step()
 
             with torch.no_grad():
-                tmp_a_distribution = self.basePG(t_p_o).clone().detach()
-            kl_pg_loss = self.kl_loss(torch.log(self.updatedPG(t_p_o)), tmp_a_distribution)
+                tmp_a_distribution = self.base_policy(t_p_o).clone().detach()
+            kl_pg_loss = self.kl_loss(torch.log(self.upd_policy(t_p_o)), tmp_a_distribution)
             self.optimizer_p.zero_grad()
             kl_pg_loss.backward()
-            for param in self.updatedPG.parameters():
+            for param in self.upd_policy.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_p.step()
 

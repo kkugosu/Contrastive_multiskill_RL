@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import sys
 from torch import nn
-from NeuralNetwork import NN
+from NeuralNetwork import basic_nn
 from utils import buffer
 import random
 
@@ -14,10 +14,10 @@ GAMMA = 0.98
 class PGPolicy(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.updatedPG = NN.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
-        self.policy = policy.Policy(self.cont, self.updatedPG, self.converter)
+        self.upd_policy = basic_nn.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
+        self.policy = policy.Policy(self.cont, self.upd_policy, self.converter)
         self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p)
-        self.optimizer = torch.optim.SGD(self.updatedPG.parameters(), lr=self.lr)
+        self.optimizer = torch.optim.SGD(self.upd_policy.parameters(), lr=self.lr)
 
     def get_policy(self):
         return self.policy
@@ -26,7 +26,7 @@ class PGPolicy(BASE.BasePolicy):
 
         if int(load) == 1:
             print("loading")
-            self.updatedPG.load_state_dict(torch.load(self.PARAM_PATH + '/1.pth'))
+            self.upd_policy.load_state_dict(torch.load(self.PARAM_PATH + '/1.pth'))
             print("loading complete")
         else:
             pass
@@ -41,9 +41,9 @@ class PGPolicy(BASE.BasePolicy):
                 break
             self.writer.add_scalar("pg/loss", loss, i)
             self.writer.add_scalar("performance", self.buffer.get_performance(), i)
-            torch.save(self.updatedPG.state_dict(), self.PARAM_PATH + '/1.pth')
+            torch.save(self.upd_policy.state_dict(), self.PARAM_PATH + '/1.pth')
 
-        for param in self.updatedPG.parameters():
+        for param in self.upd_policy.parameters():
             print("----------pg--------------")
             print(param)
 
@@ -60,14 +60,14 @@ class PGPolicy(BASE.BasePolicy):
             t_a_index = self.converter.act2index(n_a, self.b_s).unsqueeze(axis=-1)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
 
-            t_p_weight = torch.gather(self.updatedPG(t_p_o), 1, t_a_index)
+            t_p_weight = torch.gather(self.upd_policy(t_p_o), 1, t_a_index)
             weight = torch.log(t_p_weight)
             p_values = torch.transpose(t_r.unsqueeze(-1), 0, 1)
             loss = -torch.matmul(p_values, weight)/self.b_s
 
             self.optimizer.zero_grad()
             loss.backward()
-            for param in self.updatedPG.parameters():
+            for param in self.upd_policy.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
             i = i + 1

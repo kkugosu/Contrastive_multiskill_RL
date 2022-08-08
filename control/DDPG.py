@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import sys
 from torch import nn
-from NeuralNetwork import NN
+from NeuralNetwork import basic_nn
 from utils import buffer
 import random
 import torch.onnx as onnx
@@ -14,14 +14,14 @@ GAMMA = 0.98
 class DDPGPolicy(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.updatedPG = NN.HopeNN(self.o_s, self.h_s, self.a_s).to(self.device)
-        self.updatedDQN = NN.ValueNN(self.o_s + self.a_s, self.h_s, 1).to(self.device)
-        self.baseDQN = NN.ValueNN(self.o_s + self.a_s, self.h_s, 1).to(self.device)
+        self.upd_policy = basic_nn.ValueNN(self.o_s, self.h_s, self.a_s).to(self.device)
+        self.upd_queue = basic_nn.ValueNN(self.o_s + self.a_s, self.h_s, 1).to(self.device)
+        self.baseDQN = basic_nn.ValueNN(self.o_s + self.a_s, self.h_s, 1).to(self.device)
         self.baseDQN.eval()
-        self.policy = policy.Policy(self.cont, self.updatedPG, self.converter)
+        self.policy = policy.Policy(self.cont, self.upd_policy, self.converter)
         self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p)
-        self.optimizer_p = torch.optim.SGD(self.updatedPG.parameters(), lr=self.lr/100)
-        self.optimizer_q = torch.optim.SGD(self.updatedDQN.parameters(), lr=self.lr)
+        self.optimizer_p = torch.optim.SGD(self.upd_policy.parameters(), lr=self.lr/100)
+        self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss(reduction='mean')
 
     def get_policy(self):
@@ -31,9 +31,9 @@ class DDPGPolicy(BASE.BasePolicy):
 
         if int(load) == 1:
             print("loading")
-            self.updatedPG.load_state_dict(torch.load(self.PARAM_PATH + "/1.pth"))
-            self.updatedDQN.load_state_dict(torch.load(self.PARAM_PATH + "/2.pth"))
-            self.baseDQN.load_state_dict(self.updatedDQN.state_dict())
+            self.upd_policy.load_state_dict(torch.load(self.PARAM_PATH + "/1.pth"))
+            self.upd_queue.load_state_dict(torch.load(self.PARAM_PATH + "/2.pth"))
+            self.baseDQN.load_state_dict(self.upd_queue.state_dict())
             self.baseDQN.eval()
             print("loading complete")
         else:
@@ -47,15 +47,15 @@ class DDPGPolicy(BASE.BasePolicy):
             self.writer.add_scalar("pg/loss", pg_loss, i)
             self.writer.add_scalar("dqn/loss", dqn_loss, i)
             self.writer.add_scalar("performance", self.buffer.get_performance(), i)
-            torch.save(self.updatedPG.state_dict(), self.PARAM_PATH + "/1.pth")
-            torch.save(self.updatedDQN.state_dict(), self.PARAM_PATH + '/2.pth')
-            self.baseDQN.load_state_dict(self.updatedDQN.state_dict())
+            torch.save(self.upd_policy.state_dict(), self.PARAM_PATH + "/1.pth")
+            torch.save(self.upd_queue.state_dict(), self.PARAM_PATH + '/2.pth')
+            self.baseDQN.load_state_dict(self.upd_queue.state_dict())
             self.baseDQN.eval()
 
-        for param in self.updatedDQN.parameters():
+        for param in self.upd_queue.parameters():
             print("----------dqn-------------")
             print(param)
-        for param in self.updatedPG.parameters():
+        for param in self.upd_policy.parameters():
             print("----------pg--------------")
             print(param)
 
@@ -75,9 +75,9 @@ class DDPGPolicy(BASE.BasePolicy):
             t_o = torch.tensor(n_o, dtype=torch.float32).to(self.device)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
             dqn_input = torch.cat((t_p_o, t_a), dim=-1)
-            t_p_qvalue = self.updatedDQN(dqn_input)
-            dqn_input_req_grad = torch.cat((t_p_o, self.updatedPG(t_p_o)), dim=-1)
-            policy_loss = - torch.mean(self.updatedDQN(dqn_input_req_grad))
+            t_p_qvalue = self.upd_queue(dqn_input)
+            dqn_input_req_grad = torch.cat((t_p_o, self.upd_policy(t_p_o)), dim=-1)
+            policy_loss = - torch.mean(self.upd_queue(dqn_input_req_grad))
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
@@ -90,13 +90,13 @@ class DDPGPolicy(BASE.BasePolicy):
 
             self.optimizer_p.zero_grad()
             policy_loss.backward(retain_graph=True)
-            for param in self.updatedPG.parameters():
+            for param in self.upd_policy.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_p.step()
 
             self.optimizer_q.zero_grad()
             queue_loss.backward()
-            for param in self.updatedDQN.parameters():
+            for param in self.upd_queue.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_q.step()
 

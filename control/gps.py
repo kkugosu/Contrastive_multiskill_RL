@@ -2,25 +2,25 @@ from control import BASE, policy, ilqr
 import torch
 import numpy as np
 from torch import nn
-from NeuralNetwork import NN, bayesian_nn
+from NeuralNetwork import basic_nn, bayesian_nn
 from utils import buffer
 from torch.distributions.multivariate_normal import MultivariateNormal
 from torch.distributions import kl
 from utils import converter
 GAMMA = 0.98
-i_lqr_step = 3
 
 
 class GPS(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
+        self.i_lqr_step = 3
         self.Dynamics = bayesian_nn.BayesianModel(self.o_s + self.a_s, self.h_s, self.o_s).to(self.device)
-        self.Reward = NN.ValueNN(self.o_s, self.h_s, self.a_s**2 + self.a_s + 1).to(self.device)
+        self.Reward = basic_nn.ValueNN(self.o_s, self.h_s, self.a_s**2 + self.a_s + 1).to(self.device)
         self.R_NAF = converter.NAFReward(self.o_s, self.a_s, self.Reward)
-        self.Policy_net = NN.ValueNN(self.o_s, self.h_s, self.a_s**2 + self.a_s).to(self.device)
+        self.Policy_net = basic_nn.ValueNN(self.o_s, self.h_s, self.a_s**2 + self.a_s).to(self.device)
         self.P_NAF = converter.NAFPolicy(self.o_s, self.a_s, self.Policy_net)
         self.iLQG = ilqr.IterativeLQG(self.Dynamics, self.R_NAF, self.P_NAF, self.o_s, self.a_s,
-                                      self.b_s, i_lqr_step, self.device)
+                                      self.b_s, self.i_lqr_step, self.device)
         self.policy = policy.Policy(self.cont, self.iLQG, self.converter)
         self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p)
         self.optimizer_D = torch.optim.SGD(self.Dynamics.parameters(), lr=self.lr)

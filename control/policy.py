@@ -24,7 +24,6 @@ class Policy:
             return n_a
 
         elif self.policy == "PG":
-
             with torch.no_grad():
                 probability = self.model(t_p_o)
 
@@ -49,6 +48,18 @@ class Policy:
                 t_a = self.model(t_p_o)
             n_a = t_a.cpu().numpy()
             return n_a
+
+        elif self.policy == "gps":
+            if random.random() < 1.1:
+                with torch.no_grad():
+                    t_a = self.model.get_global_action(t_p_o)
+                n_a = t_a.cpu().numpy()
+                return n_a
+            else:
+                with torch.no_grad():
+                    t_a = self.model.get_local_action(t_p_o)
+                n_a = t_a.cpu().numpy()
+                return n_a
 
         else:
             print("model name error")
