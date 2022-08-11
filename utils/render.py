@@ -15,7 +15,7 @@ class Render(BASE.BasePolicy):
         total_performance = 0
         fail_time = 0
         while t < 1000:
-            n_a = self.policy.select_action(n_p_o)
+            n_a = self.policy.propagate(n_p_o)
             n_o, n_r, n_d, info = self.env.step(n_a)
             total_performance = total_performance + n_r
             n_p_o = n_o

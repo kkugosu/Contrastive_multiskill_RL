@@ -25,7 +25,7 @@ class Simulate:
             print("episode end")
             while t < capacity - total_num: #if pg, gain accumulate
 
-                n_a = self.policy.select_action(n_p_o)
+                n_a = self.policy.select(n_p_o)
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
                 t_r = diayn.getreward(n_o)
                 n_r = torch.from_numpy(t_r)

@@ -24,7 +24,7 @@ class ACPolicy(BASE.BasePolicy):
         self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss(reduction='mean')
 
-    def get_policy(self):
+    def propagate(self):
         return self.policy
 
     def training(self, load=int(0)):

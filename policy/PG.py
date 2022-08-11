@@ -15,7 +15,7 @@ class PGPolicy(BASE.BasePolicy):
         super().__init__(*args)
         self.upd_policy = basic_nn.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
         self.policy = act.Policy(self.cont, self.upd_policy, self.converter)
-        self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p)
+
         self.optimizer = torch.optim.SGD(self.upd_policy.parameters(), lr=self.lr)
 
     def get_policy(self):
