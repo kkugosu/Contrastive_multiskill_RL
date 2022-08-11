@@ -1,5 +1,6 @@
 from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 from utils import render
+from control import diayn
 
 if __name__ == "__main__":
 
@@ -63,37 +64,6 @@ if __name__ == "__main__":
         if (model_type >= 0) | (model_type < 3):
             valid = 1
 
-    if model_type == 0:
-        valid = 0
-        while valid == 0:
-            print("enter RL policy, {PG, DQN, AC, TRPO, PPO, DDPG, SAC}")
-            control = input("->")
-            if control == "PG":
-                valid = 1
-            elif control == "DQN":
-                valid = 1
-            elif control == "AC":
-                valid = 1
-            elif control == "TRPO":
-                valid = 1
-            elif control == "PPO":
-                valid = 1
-            elif control == "DDPG":
-                valid = 1
-            elif control == "SAC":
-                valid = 1
-            else:
-                print("error")
-    else:
-        valid = 0
-        while valid == 0:
-            print("enter RL policy, {gps}")
-            control = input("->")
-            if control == "gps":
-                valid = 1
-            else:
-                print("error")
-
     print("enter HIDDEN_SIZE recommend 32")
     HIDDEN_SIZE = get_integer()
 
@@ -121,53 +91,52 @@ if __name__ == "__main__":
     print("load previous model 0 or 1")
     load_ = input("->")
 
-    print("training? 0 or 1")
-    train = input("->")
-
     arg_list = [BATCH_SIZE, CAPACITY, HIDDEN_SIZE, learning_rate,
                 TRAIN_ITER, MEMORY_ITER, control, env_name, e_trace, precision, done_penalty]
     print(arg_list)
 
-    if control == "PG":
-        mechanism = PG.PGPolicy(*arg_list)
-        mechanism.training(load=load_)
-        policy = mechanism.get_policy()
+    policy = None
 
-    elif control == "AC":
-        mechanism = AC.ACPolicy(*arg_list)
-        mechanism.training(load=load_)
-        policy = mechanism.get_policy()
-
-    elif control == "DDPG":
-        if env_name == "hope":
-            mechanism = DDPG.DDPGPolicy(*arg_list)
-            mechanism.training(load=load_)
-            policy = mechanism.get_policy()
-        else:
-            pass
-
-    elif control == "TRPO":
-        mechanism = TRPO.TRPOPolicy(*arg_list)
-        mechanism.training(load=load_)
-        policy = mechanism.get_policy()
-
-    elif control == "PPO":
-        mechanism = PPO.PPOPolicy(*arg_list)
-        mechanism.training(load=load_)
-        policy = mechanism.get_policy()
-
-    elif control == "SAC":
-        mechanism = SAC.SACPolicy(*arg_list)
-        mechanism.training(load=load_)
-        policy = mechanism.get_policy()
-
-    elif control == "gps":
-        mechanism = gps.GPS(*arg_list)
-        mechanism.training(load=load_)
-        policy = mechanism.get_policy()
-
+    if model_type == 0:
+        valid = 0
+        while valid == 0:
+            print("enter RL policy, {PG, DQN, AC, TRPO, PPO, DDPG, SAC}")
+            control = input("->")
+            if control == "PG":
+                policy = PG.PGPolicy(*arg_list)
+                valid = 1
+            elif control == "AC":
+                policy = AC.ACPolicy(*arg_list)
+                valid = 1
+            elif control == "TRPO":
+                policy = TRPO.TRPOPolicy(*arg_list)
+                valid = 1
+            elif control == "PPO":
+                policy = PPO.PPOPolicy(*arg_list)
+                valid = 1
+            elif control == "DDPG":
+                policy = DDPG.DDPGPolicy(*arg_list)
+                valid = 1
+            elif control == "SAC":
+                policy = SAC.SACPolicy(*arg_list)
+                valid = 1
+            else:
+                print("error")
     else:
-        print("error")
+        valid = 0
+        while valid == 0:
+            print("enter RL policy, {gps}")
+            control = input("->")
+            if control == "gps":
+                policy = gps.GPS(*arg_list)
+                valid = 1
+            else:
+                print("error")
+    print("num_skills?")
+    num_skill = get_integer()
 
-    my_rend = render.Render(policy, *arg_list)
+    policy.training(load=load_)
+    _policy = policy.get_policy()
+
+    my_rend = render.Render(_policy, *arg_list)
     my_rend.rend()

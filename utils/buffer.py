@@ -8,24 +8,27 @@ class Simulate:
 
     def __init__(self, env, policy, step_size, done_penalty):
         self.env = env
-        self.policy = policy
         self.step_size = step_size
         self.done_penalty = done_penalty
         self.performance = 0
 
-    def renewal_memory(self, capacity, dataset, dataloader):
+    def renewal_memory(self, capacity, policy, dataset, dataloader):
         total_num = 0
         pause = 0
         total_performance = 0
         failure = 0
+        self.policy = policy
         while total_num < capacity - pause:
             n_p_o = self.env.reset()
             t = 0
+            get policy from diayn
             print("episode end")
             while t < capacity - total_num: #if pg, gain accumulate
 
                 n_a = self.policy.select_action(n_p_o)
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
+                t_r = diayn.getreward(n_o)
+                n_r = torch.from_numpy(t_r)
                 dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d))
                 n_p_o = n_o
                 t = t + 1
