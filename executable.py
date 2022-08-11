@@ -1,4 +1,4 @@
-from control import gps, AC, DDPG, PG, PPO, SAC, TRPO
+from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 from utils import render
 
 if __name__ == "__main__":
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     if model_type == 0:
         valid = 0
         while valid == 0:
-            print("enter RL control, {PG, DQN, AC, TRPO, PPO, DDPG, SAC}")
+            print("enter RL policy, {PG, DQN, AC, TRPO, PPO, DDPG, SAC}")
             control = input("->")
             if control == "PG":
                 valid = 1
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     else:
         valid = 0
         while valid == 0:
-            print("enter RL control, {gps}")
+            print("enter RL policy, {gps}")
             control = input("->")
             if control == "gps":
                 valid = 1

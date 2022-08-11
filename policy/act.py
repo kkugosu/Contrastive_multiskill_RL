@@ -4,14 +4,14 @@ from torch import nn
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
-class Policy:
+class Act:
     def __init__(self, policy, model, converter):
         self.policy = policy
         self.model = model
         self.converter = converter
         self.softmax = nn.Softmax(dim=-1)
 
-    def select_action(self, n_p_o):
+    def select(self, n_p_o):
         t_p_o = torch.tensor(n_p_o, device=device, dtype=torch.float32)
         if self.policy == "DQN":
             if random.random() < 0.95:

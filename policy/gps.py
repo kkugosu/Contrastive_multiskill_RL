@@ -1,4 +1,4 @@
-from control import BASE, policy, ilqr
+from policy import BASE, act, ilqr
 import torch
 import numpy as np
 from torch import nn

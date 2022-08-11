@@ -1,4 +1,4 @@
-from control import BASE, policy
+from policy import BASE, act
 import torch
 from NeuralNetwork import basic_nn
 from utils import buffer

@@ -1,4 +1,4 @@
-from control import BASE, policy
+from policy import BASE, act
 import gym
 import torch
 import numpy as np

@@ -15,7 +15,7 @@ class BasePolicy:
     h_s hidden space
     lr learning rate
     t_i training iteration
-    cont control
+    cont policy
     env_n environment name
     """
     def __init__(self,

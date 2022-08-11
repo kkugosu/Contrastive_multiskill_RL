@@ -1,4 +1,4 @@
-from control import BASE, policy
+from policy import BASE, act
 import gym
 import torch
 import numpy as np
@@ -11,7 +11,7 @@ import torch.onnx as onnx
 GAMMA = 0.98
 
 
-class SACPolicy(BASE.BasePolicy):
+class ACPolicy(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.upd_policy = basic_nn.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
@@ -23,8 +23,6 @@ class SACPolicy(BASE.BasePolicy):
         self.optimizer_p = torch.optim.SGD(self.upd_policy.parameters(), lr=self.lr)
         self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss(reduction='mean')
-        self.kl_loss = nn.KLDivLoss(reduction="batchmean")
-        self.log_softmax = nn.LogSoftmax(dim=-1)
 
     def get_policy(self):
         return self.policy
@@ -77,13 +75,10 @@ class SACPolicy(BASE.BasePolicy):
             t_a_index = self.converter.act2index(n_a, self.b_s).unsqueeze(axis=-1)
             t_o = torch.tensor(n_o, dtype=torch.float32).to(self.device)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
-            # t_p_weight = torch.gather(self.updatedPG(t_p_o), 1, t_a_index)
+            t_p_weight = torch.gather(self.upd_policy(t_p_o), 1, t_a_index)
             t_p_qvalue = torch.gather(self.upd_queue(t_p_o), 1, t_a_index)
-            # policy_loss = torch.mean(torch.log(t_p_weight) - t_p_qvalue)
-            # we already sampled according to policy
-
-            policy_loss = self.kl_loss(self.log_softmax(self.base_queue(t_p_o)), self.upd_policy(t_p_o))
-
+            weight = torch.transpose(torch.log(t_p_weight), 0, 1)
+            policy_loss = -torch.matmul(weight, t_p_qvalue)/self.b_s
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
@@ -101,11 +96,11 @@ class SACPolicy(BASE.BasePolicy):
             self.optimizer_p.step()
 
             self.optimizer_q.zero_grad()
-            queue_loss.backward()
+            queue_loss.backward(retain_graph=True)
             for param in self.upd_queue.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_q.step()
-
+            self.writer.add_graph(self.upd_policy, n_p_o)
             i = i + 1
         print("loss1 = ", policy_loss)
         print("loss2 = ", queue_loss)

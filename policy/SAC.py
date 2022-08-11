@@ -1,4 +1,4 @@
-from control import BASE, policy
+from policy import BASE, act
 import gym
 import torch
 import numpy as np
@@ -11,14 +11,12 @@ import torch.onnx as onnx
 GAMMA = 0.98
 
 
-class PPOPolicy(BASE.BasePolicy):
+class SACPolicy(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.upd_policy = basic_nn.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
-        self.base_policy = basic_nn.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
         self.upd_queue = basic_nn.ValueNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
         self.base_queue = basic_nn.ValueNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
-        self.base_policy.eval()
         self.base_queue.eval()
         self.policy = policy.Policy(self.cont, self.upd_policy, self.converter)
         self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p)
@@ -26,6 +24,7 @@ class PPOPolicy(BASE.BasePolicy):
         self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss(reduction='mean')
         self.kl_loss = nn.KLDivLoss(reduction="batchmean")
+        self.log_softmax = nn.LogSoftmax(dim=-1)
 
     def get_policy(self):
         return self.policy
@@ -38,8 +37,6 @@ class PPOPolicy(BASE.BasePolicy):
             self.upd_queue.load_state_dict(torch.load(self.PARAM_PATH + "/2.pth"))
             self.base_queue.load_state_dict(self.upd_queue.state_dict())
             self.base_queue.eval()
-            self.base_policy.load_state_dict(self.upd_policy.state_dict())
-            self.base_policy.eval()
             print("loading complete")
         else:
             pass
@@ -57,8 +54,6 @@ class PPOPolicy(BASE.BasePolicy):
             torch.save(self.upd_queue.state_dict(), self.PARAM_PATH + '/2.pth')
             self.base_queue.load_state_dict(self.upd_queue.state_dict())
             self.base_queue.eval()
-            self.base_policy.load_state_dict(self.upd_policy.state_dict())
-            self.base_policy.eval()
 
         for param in self.upd_queue.parameters():
             print("----------dqn-------------")
@@ -82,17 +77,13 @@ class PPOPolicy(BASE.BasePolicy):
             t_a_index = self.converter.act2index(n_a, self.b_s).unsqueeze(axis=-1)
             t_o = torch.tensor(n_o, dtype=torch.float32).to(self.device)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
-            t_p_weight = torch.gather(self.upd_policy(t_p_o), 1, t_a_index)
-            t_p_base_weight = torch.gather(self.base_policy(t_p_o), 1, t_a_index)
-            ratio = t_p_weight/t_p_base_weight
-            # at first step, ratio will be 1
+            # t_p_weight = torch.gather(self.updatedPG(t_p_o), 1, t_a_index)
             t_p_qvalue = torch.gather(self.upd_queue(t_p_o), 1, t_a_index)
-            weight = torch.transpose(ratio, 0, 1)
+            # policy_loss = torch.mean(torch.log(t_p_weight) - t_p_qvalue)
+            # we already sampled according to policy
 
-            # we can restrict result of network by clamp but we can't restrict network parameter which result in fluctuate
-            # so we add action kld term like trpo
-            state_entropy_bonus = -torch.sum(torch.log(self.upd_policy(t_p_o)) * self.upd_policy(t_p_o)) / self.b_s
-            policy_loss = -torch.matmul(weight, t_p_qvalue)/self.b_s - state_entropy_bonus*0.1
+            policy_loss = self.kl_loss(self.log_softmax(self.base_queue(t_p_o)), self.upd_policy(t_p_o))
+
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
@@ -115,19 +106,8 @@ class PPOPolicy(BASE.BasePolicy):
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_q.step()
 
-            with torch.no_grad():
-                tmp_a_distribution = self.base_policy(t_p_o).clone().detach()
-            kl_pg_loss = self.kl_loss(torch.log(self.upd_policy(t_p_o)), tmp_a_distribution)
-            self.optimizer_p.zero_grad()
-            kl_pg_loss.backward()
-            for param in self.upd_policy.parameters():
-                param.grad.data.clamp_(-1, 1)
-            self.optimizer_p.step()
-
             i = i + 1
-
         print("loss1 = ", policy_loss)
         print("loss2 = ", queue_loss)
 
         return policy_loss, queue_loss
-

@@ -1,5 +1,5 @@
 import torch
-from control import BASE
+from policy import BASE
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
