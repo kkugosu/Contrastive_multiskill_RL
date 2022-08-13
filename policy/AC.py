@@ -17,60 +17,27 @@ class ACPolicy(BASE.BasePolicy):
         self.upd_policy = basic_nn.ProbNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
         self.upd_queue = basic_nn.ValueNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
         self.base_queue = basic_nn.ValueNN(self.o_s, self.h_s, self.a_index_s).to(self.device)
-        self.base_queue.eval()
-        self.policy = policy.Policy(self.cont, self.upd_policy, self.converter)
-        self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p)
         self.optimizer_p = torch.optim.SGD(self.upd_policy.parameters(), lr=self.lr)
         self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss(reduction='mean')
 
-    def propagate(self):
-        return self.policy
+    def action(self, t_p_o):
+        with torch.no_grad():
+            probability = self.model(t_p_o)
 
-    def training(self, load=int(0)):
+        t_a_index = torch.multinomial(probability, 1)
+        n_a = self.converter.index2act(t_a_index.squeeze(-1), 1)
+        return n_a
 
-        if int(load) == 1:
-            print("loading")
-            self.upd_policy.load_state_dict(torch.load(self.PARAM_PATH + "/1.pth"))
-            self.upd_queue.load_state_dict(torch.load(self.PARAM_PATH + "/2.pth"))
-            self.base_queue.load_state_dict(self.upd_queue.state_dict())
-            self.base_queue.eval()
-            print("loading complete")
-        else:
-            pass
-        i = 0
-        while i < self.t_i:
-            print(i)
-
-            i = i + 1
-            self.buffer.renewal_memory(self.ca, self.data, self.dataloader)
-            pg_loss, dqn_loss = self.train_per_buff()
-            self.writer.add_scalar("pg/loss", pg_loss, i)
-            self.writer.add_scalar("dqn/loss", dqn_loss, i)
-            self.writer.add_scalar("performance", self.buffer.get_performance(), i)
-            torch.save(self.upd_policy.state_dict(), self.PARAM_PATH + "/1.pth")
-            torch.save(self.upd_queue.state_dict(), self.PARAM_PATH + '/2.pth')
-            self.base_queue.load_state_dict(self.upd_queue.state_dict())
-            self.base_queue.eval()
-
-        for param in self.upd_queue.parameters():
-            print("----------dqn-------------")
-            print(param)
-        for param in self.upd_policy.parameters():
-            print("----------pg--------------")
-            print(param)
-
-        self.env.close()
-        self.writer.flush()
-        self.writer.close()
-
-    def train_per_buff(self):
+    def update(self, trajectary):
         i = 0
         queue_loss = None
         policy_loss = None
+        self.base_queue.load_state_dict(self.upd_queue.state_dict())
+        self.base_queue.eval()
         while i < self.m_i:
             # print(i)
-            n_p_o, n_a, n_o, n_r, n_d = next(iter(self.dataloader))
+            n_p_o, n_a, n_o, n_r, n_d = trajectary # next(iter(self.dataloader))
             t_p_o = torch.tensor(n_p_o, dtype=torch.float32).to(self.device)
             t_a_index = self.converter.act2index(n_a, self.b_s).unsqueeze(axis=-1)
             t_o = torch.tensor(n_o, dtype=torch.float32).to(self.device)
@@ -82,7 +49,7 @@ class ACPolicy(BASE.BasePolicy):
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
-                n_a_expect = self.policy.select_action(n_o)
+                n_a_expect = self.action(n_o)
                 t_a_index = self.converter.act2index(n_a_expect, self.b_s).unsqueeze(-1)
                 t_qvalue = torch.gather(self.base_queue(t_o), 1, t_a_index)
                 t_qvalue = t_qvalue*(GAMMA**t_trace) + t_r.unsqueeze(-1)

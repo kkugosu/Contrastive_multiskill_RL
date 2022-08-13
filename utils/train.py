@@ -5,7 +5,7 @@ class Train:
     def __init__(self, env, writer, train_iter, *model):
         self.t_i = train_iter
         self.model = model
-        self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p) #pass on diayn
+        self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p)
 
     def loading(self):
         print("loading")
@@ -22,18 +22,19 @@ class Train:
             i = i + 1
 
     def train(self):
-        diayn.get model
         self.loading()
         i = 0
         while i < self.t_i:
+            print(i)
             i = i + 1
             self.buffer.renewal_memory(self.ca, self.data, self.dataloader)
-            loss = self.train_per_buff() #diayn policy update
-            print(i)
+            loss = self.update()
+
             print("loss = ", loss)
-            if loss[0][0] > 20:
-                break
-            self.writer.add_scalar("pg/loss", loss, i)
+            j = 0
+            while j < len(loss):
+                self.writer.add_scalar("loss " + str(j), loss, i)
+                j = j + 1
             self.writer.add_scalar("performance", self.buffer.get_performance(), i)
             self.saving()
 
