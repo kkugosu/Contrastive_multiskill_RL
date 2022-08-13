@@ -27,7 +27,12 @@ class SACPolicy(BASE.BasePolicy):
         self.log_softmax = nn.LogSoftmax(dim=-1)
 
     def get_policy(self):
-        return self.policy
+        with torch.no_grad():
+            probability = self.model(t_p_o)
+
+        t_a_index = torch.multinomial(probability, 1)
+        n_a = self.converter.index2act(t_a_index.squeeze(-1), 1)
+        return n_a
 
     def training(self, load=int(0)):
 

@@ -30,7 +30,16 @@ class GPS(BASE.BasePolicy):
         self.lamb = 1
 
     def get_policy(self):
-        return self.policy
+        if random.random() < 1.1:
+            with torch.no_grad():
+                t_a = self.model.get_global_action(t_p_o)
+            n_a = t_a.cpu().numpy()
+            return n_a
+        else:
+            with torch.no_grad():
+                t_a = self.model.get_local_action(t_p_o)
+            n_a = t_a.cpu().numpy()
+            return n_a
 
     def training(self, load=int(0)):
 

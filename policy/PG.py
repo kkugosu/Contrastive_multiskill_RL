@@ -18,43 +18,19 @@ class PGPolicy(BASE.BasePolicy):
 
         self.optimizer = torch.optim.SGD(self.upd_policy.parameters(), lr=self.lr)
 
-    def get_policy(self):
-        return self.policy
+    def action(self):
+        with torch.no_grad():
+            probability = self.model(t_p_o)
 
-    def training(self, load=int(0)):
+        t_a_index = torch.multinomial(probability, 1)
+        n_a = self.converter.index2act(t_a_index.squeeze(-1), 1)
+        return n_a
 
-        if int(load) == 1:
-            print("loading")
-            self.upd_policy.load_state_dict(torch.load(self.PARAM_PATH + '/1.pth'))
-            print("loading complete")
-        else:
-            pass
-        i = 0
-        while i < self.t_i:
-            i = i + 1
-            self.buffer.renewal_memory(self.ca, self.data, self.dataloader)
-            loss = self.train_per_buff()
-            print(i)
-            print("loss = ", loss)
-            if loss[0][0] > 20:
-                break
-            self.writer.add_scalar("pg/loss", loss, i)
-            self.writer.add_scalar("performance", self.buffer.get_performance(), i)
-            torch.save(self.upd_policy.state_dict(), self.PARAM_PATH + '/1.pth')
-
-        for param in self.upd_policy.parameters():
-            print("----------pg--------------")
-            print(param)
-
-        self.env.close()
-        self.writer.flush()
-        self.writer.close()
-
-    def train_per_buff(self):
+    def update(self, trajectary):
         i = 0
         while i < self.m_i:
             # print(i)
-            n_p_o, n_a, n_o, n_r, n_d = next(iter(self.dataloader))
+            n_p_o, n_a, n_o, n_r, n_d = trajectary # next(iter(self.dataloader))
             t_p_o = torch.tensor(n_p_o, dtype=torch.float32).to(self.device)
             t_a_index = self.converter.act2index(n_a, self.b_s).unsqueeze(axis=-1)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)

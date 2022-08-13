@@ -25,7 +25,10 @@ class DDPGPolicy(BASE.BasePolicy):
         self.criterion = nn.MSELoss(reduction='mean')
 
     def get_policy(self):
-        return self.policy
+        with torch.no_grad():
+            t_a = self.model(t_p_o)
+        n_a = t_a.cpu().numpy()
+        return n_a
 
     def training(self, load=int(0)):
 
