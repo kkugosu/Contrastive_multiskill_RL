@@ -14,10 +14,9 @@ GAMMA = 0.98
 class DDPGPolicy(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.upd_policy = basic_nn.ValueNN(self.s_l, self.h_s, self.a_l).to(self.device)
-        self.upd_queue = basic_nn.ValueNN(self.s_l + self.a_l, self.h_s, 1).to(self.device)
-        self.baseDQN = basic_nn.ValueNN(self.s_l + self.a_l, self.h_s, 1).to(self.device)
-        self.baseDQN.eval()
+        self.upd_policy = basic_nn.ValueNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_l).to(self.device)
+        self.upd_queue = basic_nn.ValueNN(self.s_l*self.sk_n + self.a_l, self.s_l*self.sk_n, 1).to(self.device)
+        self.base_queue = basic_nn.ValueNN(self.s_l*self.sk_n + self.a_l, self.s_l*self.sk_n, 1).to(self.device)
         self.optimizer_p = torch.optim.SGD(self.upd_policy.parameters(), lr=self.l_r)
         self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
@@ -32,8 +31,9 @@ class DDPGPolicy(BASE.BasePolicy):
         i = 0
         queue_loss = None
         policy_loss = None
+        self.base_queue.load_state_dict(self.upd_queue.state_dict())
+        self.base_queue.eval()
         while i < self.m_i:
-
             n_p_s, n_a, n_s, n_r, n_d = trajectary
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)

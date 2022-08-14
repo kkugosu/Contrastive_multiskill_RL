@@ -88,10 +88,13 @@ if __name__ == "__main__":
     print("done penalty, if cartpole, recommend 10")
     done_penalty = get_integer()
 
+    print("done penalty, if cartpole, recommend 10")
+    skill_n = get_integer()
+
     print("load previous model 0 or 1")
     load_ = input("->")
 
-    arg_list = [BATCH_SIZE, CAPACITY, HIDDEN_SIZE, learning_rate,
+    arg_list = [BATCH_SIZE, CAPACITY, HIDDEN_SIZE, learning_rate, skill_n,
                 TRAIN_ITER, MEMORY_ITER, control, env_name, e_trace, precision, done_penalty]
     print(arg_list)
 

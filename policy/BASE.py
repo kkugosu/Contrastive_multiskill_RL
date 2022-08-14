@@ -23,6 +23,7 @@ class BasePolicy:
                  m_c,
                  h_s,
                  l_r,
+                 sk_n,
                  t_i,
                  m_i,
                  policy,
@@ -35,6 +36,7 @@ class BasePolicy:
         self.m_c = m_c
         self.h_s = h_s
         self.l_r = l_r
+        self.sk_n = sk_n
         self.t_i = t_i
         self.m_i = m_i
         self.policy = policy

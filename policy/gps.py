@@ -15,10 +15,10 @@ class GPS(BASE.BasePolicy):
         super().__init__(*args)
         self.i_lqr_step = 3
         self.Dynamics = bayesian_nn.BayesianModel(self.s_l + self.a_l, self.h_s, self.s_l).to(self.device)
-        self.Reward = basic_nn.ValueNN(self.s_l, self.h_s, self.a_l**2 + self.a_l + 1).to(self.device)
-        self.R_NAF = converter.NAFReward(self.s_l, self.a_l, self.Reward)
-        self.Policy_net = basic_nn.ValueNN(self.s_l, self.h_s, self.a_l**2 + self.a_l).to(self.device)
-        self.P_NAF = converter.NAFPolicy(self.s_l, self.a_l, self.Policy_net)
+        self.Reward = basic_nn.ValueNN(self.s_l*self.sk_n, self.h_s, self.a_l**2 + self.a_l + 1).to(self.device)
+        self.R_NAF = converter.NAFReward(self.s_l*self.sk_n, self.a_l, self.Reward)
+        self.Policy_net = basic_nn.ValueNN(self.s_l*self.sk_n, self.h_s, self.a_l**2 + self.a_l).to(self.device)
+        self.P_NAF = converter.NAFPolicy(self.s_l*self.sk_n, self.a_l, self.Policy_net)
         self.iLQG = ilqr.IterativeLQG(self.Dynamics, self.R_NAF, self.P_NAF, self.s_l, self.a_l,
                                       self.b_s, self.i_lqr_step, self.device)
         self.optimizer_D = torch.optim.SGD(self.Dynamics.parameters(), lr=self.l_r)

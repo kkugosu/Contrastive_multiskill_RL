@@ -14,9 +14,9 @@ GAMMA = 0.98
 class SACPolicy(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.upd_policy = basic_nn.ProbNN(self.s_l, self.h_s, self.a_index_l).to(self.device)
-        self.upd_queue = basic_nn.ValueNN(self.s_l, self.h_s, self.a_index_l).to(self.device)
-        self.base_queue = basic_nn.ValueNN(self.s_l, self.h_s, self.a_index_l).to(self.device)
+        self.upd_policy = basic_nn.ProbNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_index_l).to(self.device)
+        self.upd_queue = basic_nn.ValueNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_index_l).to(self.device)
+        self.base_queue = basic_nn.ValueNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_index_l).to(self.device)
         self.optimizer_p = torch.optim.SGD(self.upd_policy.parameters(), lr=self.l_r)
         self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
@@ -35,6 +35,8 @@ class SACPolicy(BASE.BasePolicy):
         i = 0
         queue_loss = None
         policy_loss = None
+        self.base_queue.load_state_dict(self.upd_queue.state_dict())
+        self.base_queue.eval()
         while i < self.m_i:
             # print(i)
             n_p_s, n_a, n_s, n_r, n_d = trajectary

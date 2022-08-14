@@ -13,7 +13,7 @@ GAMMA = 0.98
 class PGPolicy(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.upd_policy = basic_nn.ProbNN(self.s_l, self.h_s, self.a_index_l).to(self.device)
+        self.upd_policy = basic_nn.ProbNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_index_l).to(self.device)
         self.optimizer = torch.optim.SGD(self.upd_policy.parameters(), lr=self.l_r)
 
     def action(self):
