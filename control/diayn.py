@@ -25,32 +25,21 @@ class DIAYN:
 
     def __init__(self,
                  b_s,
-                 ca,
                  h_s,
-                 lr,
-                 t_i,
-                 m_i,
+                 s_l,
+                 l_r,
                  cont,
-                 env_n,
-                 d_p
                  ):
         self.b_s = b_s
-        self.ca = ca
         self.h_s = h_s
-        self.lr = lr
-        self.t_i = t_i
-        self.m_i = m_i
+        self.l_r = l_r
+        self.s_l = s_l
         self.cont = cont
-        self.env_n = env_n
         self.device = DEVICE
-        self.d_p = d_p
 
-        self.skills = np.empty((10,), dtype='object')
-        i = 0
-        while i < len(self.skills):
-            self.skills[i] = PG.PGPolicy()
-            i = i + 1
-        self.discriminator = basic_nn.ValueNN(self.o_s + len(self.skills), len(self.skills), len(self.skills)).to(self.device)
+        self.skills = 10
+
+        self.discriminator = basic_nn.ValueNN(self.s_l * self.skills, self.s_l * self.skills, self.skills).to(self.device)
 
     def reward(self, state, skill):
         sa = torch.cat((state, skill), 0)

@@ -13,7 +13,7 @@ class Simulate:
         self.performance = 0
         self.control = control
 
-    def renewal_memory(self, capacity, policy, dataset, dataloader):
+    def renewal_memory(self, capacity, dataset, dataloader):
         total_num = 0
         pause = 0
         total_performance = 0
@@ -22,13 +22,12 @@ class Simulate:
         while total_num < capacity - pause:
             n_p_o = self.env.reset()
             t = 0
-            get policy from diayn
+            policy, sk_index = self.control.policy()
             print("episode end")
             while t < capacity - total_num: #if pg, gain accumulate
-
-                n_a = self.policy.select_action(n_p_o)
+                n_a = policy.action(n_p_o)
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
-                t_r = diayn.reward(n_o)
+                t_r = self.control.reward(n_o)
                 n_r = torch.from_numpy(t_r)
                 dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d))
                 n_p_o = n_o
@@ -39,7 +38,6 @@ class Simulate:
                     t = 0
                     failure = failure + 1
                     break
-            policy update
             pause = t
         self.performance = total_performance #/failure
         self._reward_converter(dataset, dataloader)
