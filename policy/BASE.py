@@ -20,35 +20,29 @@ class BasePolicy:
     """
     def __init__(self,
                  b_s,
-                 ca,
+                 m_c,
                  h_s,
-                 lr,
+                 l_r,
                  t_i,
                  m_i,
-                 cont,
+                 policy,
                  env_n,
                  e_trace,
                  precision,
                  d_p
                  ):
         self.b_s = b_s
-        self.ca = ca
+        self.m_c = m_c
         self.h_s = h_s
-        self.lr = lr
+        self.l_r = l_r
         self.t_i = t_i
         self.m_i = m_i
-        self.cont = cont
+        self.policy = policy
         self.env_n = env_n
         self.e_trace = e_trace
         self.precision = precision
         self.device = DEVICE
         self.d_p = d_p
-
-        self.PARAM_PATH = 'Parameter/' + self.env_n + self.cont
-        print("parameter path is " + self.PARAM_PATH)
-
-        self.PARAM_PATH_TEST = 'Parameter/' + self.env_n + self.cont + '_test'
-        print("tmp parameter path is " + self.PARAM_PATH_TEST)
 
         if self.env_n == "cart":
             self.env = gym.make('CartPole-v1')
@@ -57,21 +51,19 @@ class BasePolicy:
         else:
             self.env = gym.make('Hopper-v3')
 
-        self.o_s = len(self.env.observation_space.sample())
+        self.s_l = len(self.env.observation_space.sample())
         print("state_space = ", self.env.observation_space)
-        print("STATE_SIZE(input) = ", self.o_s)
+        print("STATE_SIZE(input) = ", self.s_l)
 
         if self.env_n == "cart":
-            self.a_s = 2
-            self.a_index_s = 2
+            self.a_l = 2
+            self.a_index_l = 2
         else:
-            self.a_s = len(self.env.action_space.sample())
-            self.a_index_s = self.precision ** self.a_s
+            self.a_l = len(self.env.action_space.sample())
+            self.a_index_l = self.precision ** self.a_l
         print("action_space = ", self.env.action_space)
-        print("ACTION_SIZE(output) = ", self.a_s)
-        print("ACTION_INDEX_SIZE(output) = ", self.a_index_s)
-        
-        self.data = dataset.SimData(capacity=self.ca)
-        self.dataloader = dataloader.CustomDataLoader(self.data, batch_size=self.b_s)
-        self.converter = converter.Converter(self.env_n, self.a_s, self.precision)
-        self.writer = SummaryWriter('Result/' + self.env_n + '/' + self.cont)
+        print("ACTION_SIZE(output) = ", self.a_l)
+        print("ACTION_INDEX_SIZE(output) = ", self.a_index_l)
+
+        self.converter = converter.IndexAct(self.env_n, self.a_l, self.precision)
+

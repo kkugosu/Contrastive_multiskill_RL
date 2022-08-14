@@ -14,88 +14,39 @@ class GPS(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.i_lqr_step = 3
-        self.Dynamics = bayesian_nn.BayesianModel(self.o_s + self.a_s, self.h_s, self.o_s).to(self.device)
-        self.Reward = basic_nn.ValueNN(self.o_s, self.h_s, self.a_s**2 + self.a_s + 1).to(self.device)
-        self.R_NAF = converter.NAFReward(self.o_s, self.a_s, self.Reward)
-        self.Policy_net = basic_nn.ValueNN(self.o_s, self.h_s, self.a_s**2 + self.a_s).to(self.device)
-        self.P_NAF = converter.NAFPolicy(self.o_s, self.a_s, self.Policy_net)
-        self.iLQG = ilqr.IterativeLQG(self.Dynamics, self.R_NAF, self.P_NAF, self.o_s, self.a_s,
+        self.Dynamics = bayesian_nn.BayesianModel(self.s_l + self.a_l, self.h_s, self.s_l).to(self.device)
+        self.Reward = basic_nn.ValueNN(self.s_l, self.h_s, self.a_l**2 + self.a_l + 1).to(self.device)
+        self.R_NAF = converter.NAFReward(self.s_l, self.a_l, self.Reward)
+        self.Policy_net = basic_nn.ValueNN(self.s_l, self.h_s, self.a_l**2 + self.a_l).to(self.device)
+        self.P_NAF = converter.NAFPolicy(self.s_l, self.a_l, self.Policy_net)
+        self.iLQG = ilqr.IterativeLQG(self.Dynamics, self.R_NAF, self.P_NAF, self.s_l, self.a_l,
                                       self.b_s, self.i_lqr_step, self.device)
-        self.policy = policy.Policy(self.cont, self.iLQG, self.converter)
-        self.buffer = buffer.Simulate(self.env, self.policy, step_size=self.e_trace, done_penalty=self.d_p)
-        self.optimizer_D = torch.optim.SGD(self.Dynamics.parameters(), lr=self.lr)
-        self.optimizer_R = torch.optim.SGD(self.Reward.parameters(), lr=self.lr)
-        self.optimizer_P = torch.optim.SGD(self.Policy_net.parameters(), lr=self.lr)
+        self.optimizer_D = torch.optim.SGD(self.Dynamics.parameters(), lr=self.l_r)
+        self.optimizer_R = torch.optim.SGD(self.Reward.parameters(), lr=self.l_r)
+        self.optimizer_P = torch.optim.SGD(self.Policy_net.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
         self.lamb = 1
 
-    def get_policy(self):
+    def action(self):
         if random.random() < 1.1:
             with torch.no_grad():
-                t_a = self.model.get_global_action(t_p_o)
+                t_a = self.iLQG.get_global_action(t_p_o)
             n_a = t_a.cpu().numpy()
             return n_a
         else:
             with torch.no_grad():
-                t_a = self.model.get_local_action(t_p_o)
+                t_a = self.iLQG.get_local_action(t_p_o)
             n_a = t_a.cpu().numpy()
             return n_a
 
-    def training(self, load=int(0)):
-
-        if int(load) == 1:
-            print("loading")
-            self.Dynamics.load_state_dict(torch.load(self.PARAM_PATH + "/d.pth"))
-            self.Reward.load_state_dict(torch.load(self.PARAM_PATH + "/r.pth"))
-            self.Policy_net.load_state_dict(torch.load(self.PARAM_PATH + "/p.pth"))
-            print("loading complete")
-        else:
-            pass
-        i = 0
-        while i < self.t_i:
-            print(i)
-            i = i + 1
-            self.Dynamics.set_freeze(1)
-            self.buffer.renewal_memory(self.ca, self.data, self.dataloader)
-            print("full memorymmmmmmmm")
-            self.Dynamics.set_freeze(0)
-            dyn_loss, rew_loss = self.train_dynamic_per_buff()
-            print("dynamic trainedmmmmmmmmmmmmm")
-            self.Dynamics.set_freeze(1)
-            policy_loss = self.train_policy_per_buff()
-            print("train overmmmmmmmmmmmmmmmmmmmm")
-            self.lamb = self.lamb + policy_loss
-            self.iLQG.update_lamb(self.lamb)
-            self.writer.add_scalar("dyn/loss", dyn_loss, i)
-            self.writer.add_scalar("rew/loss", rew_loss, i)
-            self.writer.add_scalar("rew/loss", policy_loss, i)
-            self.writer.add_scalar("performance", self.buffer.get_performance(), i)
-            torch.save(self.Dynamics.state_dict(), self.PARAM_PATH + "/d.pth")
-            torch.save(self.Reward.state_dict(), self.PARAM_PATH + "/r.pth")
-            torch.save(self.Policy_net.state_dict(), self.PARAM_PATH + "/p.pth")
-        """
-        for param in self.Dynamics.parameters():
-            print("----------dyn-------------")
-            print(param)
-        for param in self.Reward.parameters():
-            print("----------rew--------------")
-            print(param)
-        for param in self.Policy_net.parameters():
-            print("----------pol--------------")
-            print(param)
-        """
-
-        self.env.close()
-        self.writer.flush()
-        self.writer.close()
-
-    def train_dynamic_per_buff(self):
+    def update(self, trajectary):
         i = 0
         dyn_loss = None
         rew_loss = None
+        self.Dynamics.set_freeze(0)
         while i < self.m_i:
             # print(i)
-            n_p_o, n_a, n_o, n_r, n_d = next(iter(self.dataloader))
+            n_p_o, n_a, n_o, n_r, n_d = trajectary
             t_p_o = torch.tensor(n_p_o, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             t_o = torch.tensor(n_o, dtype=torch.float32).to(self.device)
@@ -127,14 +78,12 @@ class GPS(BASE.BasePolicy):
         print("loss1 = ", dyn_loss)
         print("loss2 = ", rew_loss)
 
-        return dyn_loss, rew_loss
-
-    def train_policy_per_buff(self):
         i = 0
         kld = 0
+        self.Dynamics.set_freeze(1)
         while i < self.m_i:
             # print(i)
-            n_p_o, n_a, n_o, n_r, n_d = next(iter(self.dataloader))
+            n_p_o, n_a, n_o, n_r, n_d = trajectary
             t_p_o = torch.tensor(n_p_o, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             with torch.no_grad():
@@ -161,4 +110,6 @@ class GPS(BASE.BasePolicy):
             i = i + 1
         print("policy loss = ", kld)
 
-        return kld
+        return dyn_loss, rew_loss, kld
+
+

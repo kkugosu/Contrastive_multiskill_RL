@@ -50,11 +50,14 @@ class DIAYN:
         while i < len(self.skills):
             self.skills[i] = PG.PGPolicy()
             i = i + 1
-        self.discrete_policy = basic_nn.ValueNN(self.o_s + len(self.skills), len(self.skills), len(self.skills)).to(self.device)
+        self.discriminator = basic_nn.ValueNN(self.o_s + len(self.skills), len(self.skills), len(self.skills)).to(self.device)
 
     def reward(self, state, skill):
         sa = torch.cat((state, skill), 0)
-        return self.discrete_policy(sa)[skill] - (1/100)
+        return self.discriminator(sa)[skill] - (1/100)
 
     def loss(self):
         return -reward()
+
+    def update(self):
+        self.policy.update()
