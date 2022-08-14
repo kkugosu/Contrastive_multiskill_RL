@@ -24,7 +24,7 @@ class BasePolicy:
                  s_l,
                  a_l,
                  a_index_l,
-                 converter
+                 _converter
                  ):
         self.l_r = l_r
         self.sk_n = sk_n
@@ -34,7 +34,7 @@ class BasePolicy:
         self.a_l = a_l
         self.a_index_l = a_index_l
         self.device = DEVICE
-        self.converter = converter
+        self.converter = _converter
 
 
 

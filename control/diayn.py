@@ -24,29 +24,30 @@ class DIAYN:
     """
 
     def __init__(self,
-                 b_s,
-                 h_s,
-                 s_l,
                  l_r,
-                 cont,
+                 s_l,
+                 policy,
                  ):
-        self.b_s = b_s
-        self.h_s = h_s
         self.l_r = l_r
         self.s_l = s_l
-        self.cont = cont
+        self.policy = policy
         self.device = DEVICE
 
         self.skills = 10
 
-        self.discriminator = basic_nn.ValueNN(self.s_l * self.skills, self.s_l * self.skills, self.skills).to(self.device)
+        self.discriminator = basic_nn.ProbNN(self.s_l * self.skills, self.s_l * self.skills, self.skills).to(self.device)
+        self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
 
-    def reward(self, state, skill):
-        sa = torch.cat((state, skill), 0)
-        return self.discriminator(sa)[skill] - (1/100)
+    def reward(self, s_k, skill):
+        return self.discriminator(s_k)[skill] - (1/100)
 
-    def loss(self):
-        return -reward()
+    def update(self, trajectary):
+        self.policy.update(trajectary)
+        n_p_s, n_a, n_s, n_r, n_d, skill_idx = trajectary
+        loss = - self.discriminator(n_p_s)[skill_idx] + (1/100)
+        self.optimizer.zero_grad()
+        loss.backward()
+        for param in self.discriminator.parameters():
+            param.grad.data.clamp_(-1, 1)
+        self.optimizer.step()
 
-    def update(self):
-        self.policy.update()

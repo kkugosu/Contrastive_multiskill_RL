@@ -1,6 +1,8 @@
 from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 from utils import render
 from control import diayn
+import gym
+from utils import converter
 
 if __name__ == "__main__":
 
@@ -41,20 +43,30 @@ if __name__ == "__main__":
     control = None
     e_trace = 1
     precision = 5
-
+    env = None
     valid = 0
     while valid == 0:
         print("enter envname, {cartpole as cart, hoppper as hope}")
         env_name = input("->")
         if env_name == "cart":
+            env = gym.make('CartPole-v1')
             valid = 1
             print("we can't use DDPG")
         elif env_name == "hope":
+            env = gym.make('Hopper-v3')
             valid = 1
             print("enter hopper precision 3 or 5")
             precision = get_integer()
         else:
             print("error")
+
+    if env_name == "cart":
+        a_l = 2
+        a_index_l = 2
+    else:
+        a_l = len(env.action_space.sample())
+        a_index_l = precision ** a_l
+
     model_type = None
 
     valid = 0
@@ -94,6 +106,9 @@ if __name__ == "__main__":
     print("load previous model 0 or 1")
     load_ = input("->")
 
+    print("num_skills?")
+    num_skill = get_integer()
+
     arg_list = [BATCH_SIZE, CAPACITY, HIDDEN_SIZE, learning_rate, skill_n,
                 TRAIN_ITER, MEMORY_ITER, control, env_name, e_trace, precision, done_penalty]
     print(arg_list)
@@ -104,23 +119,23 @@ if __name__ == "__main__":
         valid = 0
         while valid == 0:
             print("enter RL policy, {PG, DQN, AC, TRPO, PPO, DDPG, SAC}")
-            control = input("->")
-            if control == "PG":
+            policy_n = input("->")
+            if policy_n == "PG":
                 policy = PG.PGPolicy(*arg_list)
                 valid = 1
-            elif control == "AC":
+            elif policy_n == "AC":
                 policy = AC.ACPolicy(*arg_list)
                 valid = 1
-            elif control == "TRPO":
+            elif policy_n == "TRPO":
                 policy = TRPO.TRPOPolicy(*arg_list)
                 valid = 1
-            elif control == "PPO":
+            elif policy_n == "PPO":
                 policy = PPO.PPOPolicy(*arg_list)
                 valid = 1
-            elif control == "DDPG":
+            elif policy_n == "DDPG":
                 policy = DDPG.DDPGPolicy(*arg_list)
                 valid = 1
-            elif control == "SAC":
+            elif policy_n == "SAC":
                 policy = SAC.SACPolicy(*arg_list)
                 valid = 1
             else:
@@ -135,8 +150,18 @@ if __name__ == "__main__":
                 valid = 1
             else:
                 print("error")
-    print("num_skills?")
-    num_skill = get_integer()
+
+    s_l = len(env.observation_space.sample())
+    my_converter = converter.IndexAct(env_name, a_l, precision, BATCH_SIZE)
+
+    valid = 0
+    while valid == 0:
+        print("enter RL control, {diayn}")
+        control_n = input("->")
+        if control_n == "diayn":
+            cont = diayn.DIAYN(l_r, s_l, policy)
+        else:
+            print("control name error")
 
     policy.training(load=load_)
     _policy = policy.get_policy()
