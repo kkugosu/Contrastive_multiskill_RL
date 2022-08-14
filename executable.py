@@ -1,5 +1,5 @@
 from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
-from utils import render
+from utils import render, train
 from control import diayn
 import gym
 from utils import converter
@@ -153,7 +153,8 @@ if __name__ == "__main__":
 
     s_l = len(env.observation_space.sample())
     my_converter = converter.IndexAct(env_name, a_l, precision, BATCH_SIZE)
-
+    control_n = None
+    cont = None
     valid = 0
     while valid == 0:
         print("enter RL control, {diayn}")
@@ -163,8 +164,11 @@ if __name__ == "__main__":
         else:
             print("control name error")
 
-    policy.training(load=load_)
-    _policy = policy.get_policy()
+    my_train = train.Train(learning_rate, policy, TRAIN_ITER, MEMORY_ITER, BATCH_SIZE,
+                          control_n, cont, done_penalty, CAPACITY,  env_name, env, e_trace)
+    policy = my_train.train()
+    distribution_policy = initialize(policy)
+    optimal_policy = distribution_policy.select()
 
-    my_rend = render.Render(_policy, *arg_list)
+    my_rend = render.Render(optimal_policy, *arg_list)
     my_rend.rend()
