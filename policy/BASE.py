@@ -8,7 +8,6 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 class BasePolicy:
     """
     b_s batch_size
-    ca capacity
     o_s observation space
     a_s action space
     h_s hidden space
@@ -18,9 +17,6 @@ class BasePolicy:
     env_n environment name
     """
     def __init__(self,
-                 b_s,
-                 m_c,
-                 h_s,
                  l_r,
                  sk_n,
                  t_i,
@@ -28,10 +24,8 @@ class BasePolicy:
                  s_l,
                  a_l,
                  a_index_l,
+                 converter
                  ):
-        self.b_s = b_s
-        self.m_c = m_c
-        self.h_s = h_s
         self.l_r = l_r
         self.sk_n = sk_n
         self.t_i = t_i
@@ -40,6 +34,7 @@ class BasePolicy:
         self.a_l = a_l
         self.a_index_l = a_index_l
         self.device = DEVICE
+        self.converter = converter
 
 
 
