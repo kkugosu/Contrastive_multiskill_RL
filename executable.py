@@ -166,9 +166,10 @@ if __name__ == "__main__":
 
     my_train = train.Train(learning_rate, policy, TRAIN_ITER, MEMORY_ITER, BATCH_SIZE,
                           control_n, cont, done_penalty, CAPACITY,  env_name, env, e_trace)
-    policy = my_train.train()
-    distribution_policy = initialize(policy)
-    optimal_policy = distribution_policy.select()
 
-    my_rend = render.Render(optimal_policy, *arg_list)
+    policy = my_train.train()
+    selected_policy = initialize(policy, done_penalty, CAPACITY, env_name, env)
+    optimal_policy = selected_policy.train()
+
+    my_rend = render.Render(optimal_policy, env)
     my_rend.rend()

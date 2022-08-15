@@ -15,9 +15,9 @@ class Train:
         self.l_r = learning_rate
         self.policy = policy
         self.env = env
-        self.cont = None
+        self.cont = cont
 
-        self.buffer = buffer.Simulate(self.env, cont, step_size=e_trace, done_penalty=d_p)
+        self.buffer = buffer.Simulate(self.env, self.cont, step_size=e_trace, done_penalty=d_p)
         self.data = dataset.SimData(capacity=self.ca)
         self.dataloader = dataloader.CustomDataLoader(self.data, batch_size=self.b_s)
 
@@ -44,15 +44,15 @@ class Train:
             i = i + 1
 
     def train(self):
-        self.model = policy.getmodel
-        self.model = diayn.getmodel
+        self.model = self.policy.getmodel
+        self.model = self.cont.getmodel
         self.loading()
         i = 0
         while i < self.t_i:
             print(i)
             i = i + 1
             self.buffer.renewal_memory(self.ca, self.data, self.dataloader)
-            loss = self.diayn.update()
+            loss = self.cont.update(next(iter(self.dataloader)))
             print("loss = ", loss)
             j = 0
             while j < len(loss):

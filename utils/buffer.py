@@ -22,9 +22,12 @@ class Simulate:
         while total_num < capacity - pause:
             n_p_o = self.env.reset()
             t = 0
-            policy, sk_index = self.control.policy()
+            policy, full_index, sk_index = self.control.policy()
             print("episode end")
             while t < capacity - total_num: #if pg, gain accumulate
+                tmp_n_p_o = np.zeros(len(n_p_o)*full_index)
+                tmp_n_p_o[sk_index*len(n_p_o):(sk_index+1)*len(n_p_o)] = n_p_o
+                n_p_o = tmp_n_p_o
                 n_a = policy.action(n_p_o)
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
                 t_r = self.control.reward(n_o)

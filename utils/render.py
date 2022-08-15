@@ -3,10 +3,10 @@ from policy import BASE
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
-class Render(BASE.BasePolicy):
-    def __init__(self, p, *args):
-        super().__init__(*args)
-        self.policy = p
+class Render:
+    def __init__(self, policy, env):
+        self.policy = policy
+        self.env = env
 
     def rend(self):
         n_p_o = self.env.reset()
@@ -15,7 +15,7 @@ class Render(BASE.BasePolicy):
         total_performance = 0
         fail_time = 0
         while t < 1000:
-            n_a = self.policy.propagate(n_p_o)
+            n_a = self.policy.action(n_p_o)
             n_o, n_r, n_d, info = self.env.step(n_a)
             total_performance = total_performance + n_r
             n_p_o = n_o
