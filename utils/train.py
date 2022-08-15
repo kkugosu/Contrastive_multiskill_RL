@@ -17,7 +17,7 @@ class Train:
         self.env = env
         self.cont = cont
 
-        self.buffer = buffer.Simulate(self.env, self.cont, step_size=e_trace, done_penalty=d_p)
+        self.buffer = buffer.Memory(self.env, self.cont, step_size=e_trace, done_penalty=d_p)
         self.data = dataset.SimData(capacity=self.ca)
         self.dataloader = dataloader.CustomDataLoader(self.data, batch_size=self.b_s)
 
@@ -43,7 +43,7 @@ class Train:
             torch.save(self.model[i].state_dict(), self.PARAM_PATH + '/' + str(i) + '.pth')
             i = i + 1
 
-    def train(self):
+    def pre_train(self):
         self.model = self.policy.getmodel
         self.model = self.cont.getmodel
         self.loading()
@@ -51,8 +51,50 @@ class Train:
         while i < self.t_i:
             print(i)
             i = i + 1
-            self.buffer.renewal_memory(self.ca, self.data, self.dataloader)
+            self.buffer.simulate(self.ca, self.data, self.dataloader)
             loss = self.cont.update(next(iter(self.dataloader)))
+            print("loss = ", loss)
+            j = 0
+            while j < len(loss):
+                self.writer.add_scalar("loss " + str(j), loss, i)
+                j = j + 1
+            self.writer.add_scalar("performance", self.buffer.get_performance(), i)
+            self.saving()
+
+        i = 0
+        while i < len(self.model):
+            for param in self.model[i].parameters():
+                print("-----------" + str(i) + "-------------")
+                print(param)
+            i = i + 1
+
+        self.env.close()
+        self.writer.flush()
+        self.writer.close()
+
+    def train(self):
+        i = 0
+        pre_performance = 0
+        maxp_index = 0
+        while i < skill_num:
+            j = 0
+            performance = 0
+            while j < 10:
+                j = j + 1
+                performance = + self.buffer.simulate(self.ca, self.data, self.dataloader,i)
+            i = i + 1
+            if performance > pre_performance:
+                maxp_index = i
+                pre_performance = performance
+
+        self.model = self.policy.getmodel
+        self.loading()
+        i = 0
+        while i < self.t_i:
+            print(i)
+            i = i + 1
+            self.buffer.simulate(self.ca, self.data, self.dataloader,maxp_index)
+            loss = self.policy.update(next(iter(self.dataloader)))
             print("loss = ", loss)
             j = 0
             while j < len(loss):

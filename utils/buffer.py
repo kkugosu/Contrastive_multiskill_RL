@@ -4,7 +4,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 GAMMA = 0.98
 
 
-class Simulate:
+class Memory:
 
     def __init__(self, env, control, step_size, done_penalty):
         self.env = env
@@ -12,17 +12,24 @@ class Simulate:
         self.done_penalty = done_penalty
         self.performance = 0
         self.control = control
+        self.index = None
+        self.skill_num = skill_num
 
-    def renewal_memory(self, capacity, dataset, dataloader):
+    def simulate(self, capacity, dataset, dataloader, index=None):
         total_num = 0
         pause = 0
         total_performance = 0
         failure = 0
-
+        if index is not None:
+            print("simulate after training")
+            self.index = index
+        else:
+            print("simulate for training")
+            self.index = np.random.randint(full_index)
         while total_num < capacity - pause:
             n_p_o = self.env.reset()
             t = 0
-            policy, full_index, sk_index = self.control.policy()
+            policy = self.control.policy(self.index)
             print("episode end")
             while t < capacity - total_num: #if pg, gain accumulate
                 tmp_n_p_o = np.zeros(len(n_p_o)*full_index)
@@ -44,6 +51,7 @@ class Simulate:
             pause = t
         self.performance = total_performance #/failure
         self._reward_converter(dataset, dataloader)
+        return total_performance
 
     def get_performance(self):
         return self.performance

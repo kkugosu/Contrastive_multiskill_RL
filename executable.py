@@ -165,11 +165,10 @@ if __name__ == "__main__":
             print("control name error")
 
     my_train = train.Train(learning_rate, policy, TRAIN_ITER, MEMORY_ITER, BATCH_SIZE,
-                          control_n, cont, done_penalty, CAPACITY,  env_name, env, e_trace)
+                          control_n, cont, CAPACITY,  env_name, buffer)
 
-    policy = my_train.train()
-    selected_policy = initialize(policy, done_penalty, CAPACITY, env_name, env)
-    optimal_policy = selected_policy.train()
+    policy = my_train.pre_train()
+    optimal_policy = my_train.train()
 
     my_rend = render.Render(optimal_policy, env)
     my_rend.rend()
