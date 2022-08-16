@@ -7,8 +7,6 @@ from NeuralNetwork import basic_nn
 from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 import numpy as np
 
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-
 
 class DIAYN:
     """
@@ -25,13 +23,14 @@ class DIAYN:
                  l_r,
                  s_l,
                  policy,
+                 skill_num,
+                 device
                  ):
         self.l_r = l_r
         self.s_l = s_l
         self.policy = policy
-        self.device = DEVICE
-
-        self.skills = 10
+        self.device = device
+        self.skills = skill_num
 
         self.discriminator = basic_nn.ProbNN(self.s_l * self.skills, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)

@@ -160,11 +160,11 @@ if __name__ == "__main__":
         print("enter RL control, {diayn}")
         control_name = input("->")
         if control_name == "diayn":
-            cont = diayn.DIAYN(learning_rate, STATE_LENGTH, policy)
+            cont = diayn.DIAYN(learning_rate, STATE_LENGTH, policy, skill_num, DEVICE)
         else:
             print("control name error")
 
-    my_train = train.Train(TRAIN_ITER, MEMORY_ITER, BATCH_SIZE, control_name,
+    my_train = train.Train(TRAIN_ITER, MEMORY_ITER, BATCH_SIZE, skill_num, control_name,
                            CAPACITY, env, control, env_name, e_trace, done_penalty)
 
     policy = my_train.pre_train()

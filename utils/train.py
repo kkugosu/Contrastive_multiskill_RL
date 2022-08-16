@@ -5,7 +5,7 @@ from control import diayn
 
 
 class Train:
-    def __init__(self, train_iter, memory_iter, batch_size,
+    def __init__(self, train_iter, memory_iter, batch_size, skill_n,
                  control_n, capacity, env, cont, env_n, e_trace, d_p):
 
         self.t_i = train_iter
@@ -14,7 +14,8 @@ class Train:
         self.b_s = batch_size
         self.cont = cont
         self.env = env
-        self.buffer = buffer.Memory(self.env, self.cont, step_size=e_trace, done_penalty=d_p)
+        self.skill_num = skill_n
+        self.buffer = buffer.Memory(self.env, self.cont, step_size=e_trace, done_penalty=d_p, skill_num=self.skill_num)
         self.data = dataset.SimData(capacity=self.capacity)
         self.dataloader = dataloader.CustomDataLoader(self.data, batch_size=self.b_s)
 
@@ -59,12 +60,12 @@ class Train:
         i = 0
         pre_performance = 0
         maxp_index = 0
-        while i < skill_num:
+        while i < self.skill_num:
             j = 0
             performance = 0
             while j < 10:
                 j = j + 1
-                performance = + self.buffer.simulate(self.capacity, self.data, self.dataloader,i)
+                performance = + self.buffer.simulate(self.capacity, self.data, self.dataloader, index=i)
             i = i + 1
             if performance > pre_performance:
                 maxp_index = i

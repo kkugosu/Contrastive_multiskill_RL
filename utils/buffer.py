@@ -6,7 +6,7 @@ GAMMA = 0.98
 
 class Memory:
 
-    def __init__(self, env, control, step_size, done_penalty):
+    def __init__(self, env, control, step_size, done_penalty, skill_num):
         self.env = env
         self.step_size = step_size
         self.done_penalty = done_penalty
@@ -25,15 +25,15 @@ class Memory:
             self.index = index
         else:
             print("simulate for training")
-            self.index = np.random.randint(full_index)
+            self.index = np.random.randint(self.skill_num)
         while total_num < capacity - pause:
             n_p_o = self.env.reset()
             t = 0
             policy = self.control.policy(self.index)
             print("episode end")
             while t < capacity - total_num: #if pg, gain accumulate
-                tmp_n_p_o = np.zeros(len(n_p_o)*full_index)
-                tmp_n_p_o[sk_index*len(n_p_o):(sk_index+1)*len(n_p_o)] = n_p_o
+                tmp_n_p_o = np.zeros(len(n_p_o)*self.skill_num)
+                tmp_n_p_o[index*len(n_p_o):(index+1)*len(n_p_o)] = n_p_o
                 n_p_o = tmp_n_p_o
                 n_a = policy.action(n_p_o)
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
