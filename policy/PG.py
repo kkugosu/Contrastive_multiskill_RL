@@ -1,12 +1,7 @@
 from policy import BASE, act
-import gym
 import torch
 import numpy as np
-import sys
-from torch import nn
 from NeuralNetwork import basic_nn
-from utils import buffer
-import random
 GAMMA = 0.98
 
 
@@ -26,6 +21,7 @@ class PGPolicy(BASE.BasePolicy):
 
     def update(self, *trajectory):
         i = 0
+        loss = 0
         while i < self.m_i:
             # print(i)
             n_p_s, n_a, n_s, n_r, n_d = trajectory[0] # next(iter(self.dataloader))
@@ -44,14 +40,11 @@ class PGPolicy(BASE.BasePolicy):
                 param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
             i = i + 1
-
         return loss
 
     def load_model(self, path):
         self.upd_policy.load_state_dict(torch.load(path))
 
-
     def save_model(self, path):
         torch.save(self.upd_policy, path)
-
         return self.upd_policy

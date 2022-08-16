@@ -1,13 +1,8 @@
-from policy import BASE, act
-import gym
+from policy import BASE
 import torch
 import numpy as np
-import sys
 from torch import nn
 from NeuralNetwork import basic_nn
-from utils import buffer
-import random
-import torch.onnx as onnx
 GAMMA = 0.98
 
 
@@ -64,7 +59,6 @@ class DDPGPolicy(BASE.BasePolicy):
             for param in self.upd_queue.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_q.step()
-
             i = i + 1
 
         print("loss1 = ", policy_loss)

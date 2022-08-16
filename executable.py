@@ -3,6 +3,7 @@ from utils import render, train
 from control import diayn
 import gym
 from utils import converter
+import torch
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 if __name__ == "__main__":
@@ -21,6 +22,7 @@ if __name__ == "__main__":
     control_name = None
     e_trace = 1
     precision = 3
+    model_type = None
 
     def get_integer():
         _valid = 0
@@ -71,8 +73,6 @@ if __name__ == "__main__":
     else:
         ACTION_LENGTH = len(env.action_space.sample())
         A_index_L = precision ** ACTION_LENGTH
-
-    model_type = None
 
     valid = 0
     while valid == 0:

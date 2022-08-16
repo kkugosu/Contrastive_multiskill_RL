@@ -3,7 +3,6 @@ import torch
 import numpy as np
 from torch import nn
 from NeuralNetwork import basic_nn, bayesian_nn
-from utils import buffer
 from torch.distributions.multivariate_normal import MultivariateNormal
 from torch.distributions import kl
 from utils import converter
