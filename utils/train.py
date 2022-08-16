@@ -16,7 +16,6 @@ class Train:
         self.policy = policy
         self.env = env
         self.cont = cont
-
         self.buffer = buffer.Memory(self.env, self.cont, step_size=e_trace, done_penalty=d_p)
         self.data = dataset.SimData(capacity=self.ca)
         self.dataloader = dataloader.CustomDataLoader(self.data, batch_size=self.b_s)
@@ -29,24 +28,12 @@ class Train:
         self.PARAM_PATH_TEST = 'Parameter/' + env_n + control_n + '_test'
         print("tmp parameter path is " + self.PARAM_PATH_TEST)
 
-    def loading(self):
-        print("loading")
-        i = 0
-        while i < len(self.model):
-            self.model[i].load_state_dict(torch.load(self.PARAM_PATH + '/' + str(i) + '.pth'))
-            i = i + 1
-        print("loading complete")
-
-    def saving(self):
-        i = 0
-        while i < len(self.model):
-            torch.save(self.model[i].state_dict(), self.PARAM_PATH + '/' + str(i) + '.pth')
-            i = i + 1
-
     def pre_train(self):
-        self.model = self.policy.getmodel
-        self.model = self.cont.getmodel
-        self.loading()
+
+        self.cont.load_model(self.PARAM_PATH)
+        self.policy.load_model(self.PARAM_PATH)
+        c_model = None
+        p_model = None
         i = 0
         while i < self.t_i:
             print(i)
@@ -59,11 +46,18 @@ class Train:
                 self.writer.add_scalar("loss " + str(j), loss, i)
                 j = j + 1
             self.writer.add_scalar("performance", self.buffer.get_performance(), i)
-            self.saving()
+            c_model = self.cont.save_model(self.PARAM_PATH)
+            p_model = self.policy.save_model(self.PARAM_PATH)
 
         i = 0
-        while i < len(self.model):
-            for param in self.model[i].parameters():
+        while i < len(c_model):
+            for param in c_model[i].parameters():
+                print("-----------" + str(i) + "-------------")
+                print(param)
+            i = i + 1
+        i = 0
+        while i < len(p_model):
+            for param in p_model[i].parameters():
                 print("-----------" + str(i) + "-------------")
                 print(param)
             i = i + 1
@@ -87,8 +81,10 @@ class Train:
                 maxp_index = i
                 pre_performance = performance
 
-        self.model = self.policy.getmodel
-        self.loading()
+        self.cont.load_model(self.PARAM_PATH)
+        self.policy.load_model(self.PARAM_PATH)
+        c_model = None
+        p_model = None
         i = 0
         while i < self.t_i:
             print(i)
@@ -101,11 +97,18 @@ class Train:
                 self.writer.add_scalar("loss " + str(j), loss, i)
                 j = j + 1
             self.writer.add_scalar("performance", self.buffer.get_performance(), i)
-            self.saving()
+            c_model = self.cont.save_model(self.PARAM_PATH)
+            p_model = self.policy.save_model(self.PARAM_PATH)
 
         i = 0
-        while i < len(self.model):
-            for param in self.model[i].parameters():
+        while i < len(c_model):
+            for param in c_model[i].parameters():
+                print("-----------" + str(i) + "-------------")
+                print(param)
+            i = i + 1
+        i = 0
+        while i < len(p_model):
+            for param in p_model[i].parameters():
                 print("-----------" + str(i) + "-------------")
                 print(param)
             i = i + 1

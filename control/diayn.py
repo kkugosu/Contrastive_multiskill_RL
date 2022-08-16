@@ -51,3 +51,8 @@ class DIAYN:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
+    def get_model(self):
+        return self.discriminator
+
+    def set_model(self, model):
+        self.discriminator.load_state_dict(model.state_dict())
