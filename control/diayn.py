@@ -12,8 +12,6 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class DIAYN:
     """
-    b_s batch_size
-    ca capacity
     o_s observation space
     a_s action space
     h_s hidden space
@@ -41,19 +39,24 @@ class DIAYN:
     def reward(self, s_k, skill):
         return self.discriminator(s_k)[skill] - (1/100)
 
-    def update(self, trajectary):
-        self.policy.update(trajectary)
-        n_p_s, n_a, n_s, n_r, n_d, skill_idx = trajectary
-        loss = - self.discriminator(n_p_s)[skill_idx] + (1/100)
-        self.optimizer.zero_grad()
-        loss.backward()
-        for param in self.discriminator.parameters():
-            param.grad.data.clamp_(-1, 1)
-        self.optimizer.step()
+    def update(self, memory_iter, *trajectory):
+        i = 0
+        while i < memory_iter:
+            i = i + 1
+            self.policy.update(trajectory)
+            n_p_s, n_a, n_s, n_r, n_d, skill_idx = trajectory
+            loss = - self.discriminator(n_p_s)[skill_idx] + (1/100)
+            self.optimizer.zero_grad()
+            loss.backward()
+            for param in self.discriminator.parameters():
+                param.grad.data.clamp_(-1, 1)
+            self.optimizer.step()
 
     def load_model(self, path):
         self.discriminator.load_state_dict(torch.load(path))
+        self.policy.load_model(path)
 
     def save_model(self, path):
         torch.save(self.discriminator, path)
+        self.policy.save_model(path)
         return self.discriminator

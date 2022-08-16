@@ -34,7 +34,7 @@ class DDPGPolicy(BASE.BasePolicy):
         self.base_queue.load_state_dict(self.upd_queue.state_dict())
         self.base_queue.eval()
         while i < self.m_i:
-            n_p_s, n_a, n_s, n_r, n_d = trajectory
+            n_p_s, n_a, n_s, n_r, n_d = trajectory[0]
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)

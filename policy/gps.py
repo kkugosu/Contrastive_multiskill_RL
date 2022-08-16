@@ -46,7 +46,7 @@ class GPS(BASE.BasePolicy):
         self.Dynamics.set_freeze(0)
         while i < self.m_i:
             # print(i)
-            n_p_o, n_a, n_o, n_r, n_d = trajectory
+            n_p_o, n_a, n_o, n_r, n_d = trajectory[0]
             t_p_o = torch.tensor(n_p_o, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             t_o = torch.tensor(n_o, dtype=torch.float32).to(self.device)

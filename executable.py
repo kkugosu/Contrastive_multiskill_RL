@@ -3,6 +3,7 @@ from utils import render, train
 from control import diayn
 import gym
 from utils import converter
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 if __name__ == "__main__":
 
@@ -13,6 +14,13 @@ if __name__ == "__main__":
     HIDDEN_SIZE = 32
     learning_rate = 0.01
     policy = None
+    policy_name = None
+    env = None
+    env_name = None
+    control = None
+    control_name = None
+    e_trace = 1
+    precision = 3
 
     def get_integer():
         _valid = 0
@@ -39,11 +47,6 @@ if __name__ == "__main__":
             except ValueError:
                 print("enter float")
 
-    env_name = None
-    control = None
-    e_trace = 1
-    precision = 5
-    env = None
     valid = 0
     while valid == 0:
         print("enter envname, {cartpole as cart, hoppper as hope}")
@@ -60,12 +63,14 @@ if __name__ == "__main__":
         else:
             print("error")
 
+    STATE_LENGTH = len(env.observation_space.sample())
+
     if env_name == "cart":
-        a_l = 2
-        a_index_l = 2
+        ACTION_LENGTH = 2
+        A_index_L = 2
     else:
-        a_l = len(env.action_space.sample())
-        a_index_l = precision ** a_l
+        ACTION_LENGTH = len(env.action_space.sample())
+        A_index_L = precision ** ACTION_LENGTH
 
     model_type = None
 
@@ -107,13 +112,12 @@ if __name__ == "__main__":
     load_ = input("->")
 
     print("num_skills?")
-    num_skill = get_integer()
+    skill_num = get_integer()
 
-    arg_list = [BATCH_SIZE, CAPACITY, HIDDEN_SIZE, learning_rate, skill_n,
-                TRAIN_ITER, MEMORY_ITER, control, env_name, e_trace, precision, done_penalty]
-    print(arg_list)
+    my_converter = converter.IndexAct(env_name, ACTION_LENGTH, precision, BATCH_SIZE)
 
-    policy = None
+    arg_list = [learning_rate, skill_num, TRAIN_ITER, MEMORY_ITER, STATE_LENGTH, ACTION_LENGTH,
+                A_index_L, my_converter, DEVICE]
 
     if model_type == 0:
         valid = 0
@@ -151,21 +155,17 @@ if __name__ == "__main__":
             else:
                 print("error")
 
-    s_l = len(env.observation_space.sample())
-    my_converter = converter.IndexAct(env_name, a_l, precision, BATCH_SIZE)
-    control_n = None
-    cont = None
     valid = 0
     while valid == 0:
         print("enter RL control, {diayn}")
-        control_n = input("->")
-        if control_n == "diayn":
-            cont = diayn.DIAYN(l_r, s_l, policy)
+        control_name = input("->")
+        if control_name == "diayn":
+            cont = diayn.DIAYN(learning_rate, STATE_LENGTH, policy)
         else:
             print("control name error")
 
-    my_train = train.Train(learning_rate, policy, TRAIN_ITER, MEMORY_ITER, BATCH_SIZE,
-                          control_n, cont, CAPACITY,  env_name, buffer)
+    my_train = train.Train(TRAIN_ITER, MEMORY_ITER, BATCH_SIZE, control_name,
+                           CAPACITY, env, control, env_name, e_trace, done_penalty)
 
     policy = my_train.pre_train()
     optimal_policy = my_train.train()
