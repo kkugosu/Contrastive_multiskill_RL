@@ -24,7 +24,7 @@ class TRPOPolicy(BASE.BasePolicy):
         self.criterion = nn.MSELoss(reduction='mean')
         self.kl_loss = nn.KLDivLoss(reduction="batchmean")
 
-    def action(self):
+    def action(self, t_p_o):
         with torch.no_grad():
             probability = self.upd_policy(t_p_o)
 
@@ -32,7 +32,7 @@ class TRPOPolicy(BASE.BasePolicy):
         n_a = self.converter.index2act(t_a_index.squeeze(-1), 1)
         return n_a
 
-    def update(self, trajectary):
+    def update(self, *trajectory):
         i = 0
         queue_loss = None
         policy_loss = None
@@ -42,20 +42,20 @@ class TRPOPolicy(BASE.BasePolicy):
         self.base_policy.eval()
         while i < self.m_i:
             # print(i)
-            n_p_s, n_a, n_s, n_r, n_d = trajectary
+            n_p_s, n_a, n_s, n_r, n_d = trajectory
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
-            t_a_index = self.converter.act2index(n_a, self.b_s).unsqueeze(axis=-1)
+            t_a_index = self.converter.act2index(n_a).unsqueeze(axis=-1)
             t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
             t_p_weight = torch.gather(self.upd_policy(t_p_s), 1, t_a_index)
             t_p_qvalue = torch.gather(self.upd_queue(t_p_s), 1, t_a_index)
             weight = torch.transpose(torch.log(t_p_weight), 0, 1)
-            policy_loss = -torch.matmul(weight, t_p_qvalue)/self.b_s
+            policy_loss = -torch.matmul(weight, t_p_qvalue)
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
-                n_a_expect = self.policy.select_action(n_s)
-                t_a_index = self.converter.act2index(n_a_expect, self.b_s).unsqueeze(-1)
+                n_a_expect = self.action(n_s)
+                t_a_index = self.converter.act2index(n_a_expect).unsqueeze(-1)
                 t_qvalue = torch.gather(self.base_queue(t_s), 1, t_a_index)
                 t_qvalue = t_qvalue*(GAMMA**t_trace) + t_r.unsqueeze(-1)
 
@@ -89,3 +89,11 @@ class TRPOPolicy(BASE.BasePolicy):
 
         return policy_loss, queue_loss
 
+    def load_model(self, path):
+        self.upd_policy.load_state_dict(torch.load(path))
+        self.upd_queue.load_state_dict(torch.load(path))
+
+    def save_model(self, path):
+        torch.save(self.upd_policy, path)
+        torch.save(self.upd_queue, path)
+        return self.upd_policy, self.upd_queue

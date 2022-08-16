@@ -29,7 +29,7 @@ class ACPolicy(BASE.BasePolicy):
         n_a = self.converter.index2act(t_a_index.squeeze(-1))
         return n_a
 
-    def update(self, trajectary):
+    def update(self, *trajectory):
         i = 0
         queue_loss = None
         policy_loss = None
@@ -37,7 +37,7 @@ class ACPolicy(BASE.BasePolicy):
         self.base_queue.eval()
         while i < self.m_i:
             # print(i)
-            n_p_s, n_a, n_s, n_r, n_d = trajectary # next(iter(self.dataloader))
+            n_p_s, n_a, n_s, n_r, n_d = trajectory # next(iter(self.dataloader))
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a_index = self.converter.act2index(n_a).unsqueeze(axis=-1)
             t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
@@ -73,3 +73,12 @@ class ACPolicy(BASE.BasePolicy):
         print("loss2 = ", queue_loss)
 
         return policy_loss, queue_loss
+
+    def load_model(self, path):
+        self.upd_policy.load_state_dict(torch.load(path))
+        self.upd_queue.load_state_dict(torch.load(path))
+
+    def save_model(self, path):
+        torch.save(self.upd_policy, path)
+        torch.save(self.upd_queue, path)
+        return self.upd_policy, self.upd_queue

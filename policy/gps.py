@@ -14,10 +14,10 @@ class GPS(BASE.BasePolicy):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.i_lqr_step = 3
-        self.Dynamics = bayesian_nn.BayesianModel(self.s_l + self.a_l, self.h_s, self.s_l).to(self.device)
-        self.Reward = basic_nn.ValueNN(self.s_l*self.sk_n, self.h_s, self.a_l**2 + self.a_l + 1).to(self.device)
+        self.Dynamics = bayesian_nn.BayesianModel(self.s_l + self.a_l, self.s_l*self.sk_n, self.s_l).to(self.device)
+        self.Reward = basic_nn.ValueNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_l**2 + self.a_l + 1).to(self.device)
         self.R_NAF = converter.NAFReward(self.s_l*self.sk_n, self.a_l, self.Reward)
-        self.Policy_net = basic_nn.ValueNN(self.s_l*self.sk_n, self.h_s, self.a_l**2 + self.a_l).to(self.device)
+        self.Policy_net = basic_nn.ValueNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_l**2 + self.a_l).to(self.device)
         self.P_NAF = converter.NAFPolicy(self.s_l*self.sk_n, self.a_l, self.Policy_net)
         self.iLQG = ilqr.IterativeLQG(self.Dynamics, self.R_NAF, self.P_NAF, self.s_l, self.a_l,
                                       self.b_s, self.i_lqr_step, self.device)
@@ -27,7 +27,7 @@ class GPS(BASE.BasePolicy):
         self.criterion = nn.MSELoss(reduction='mean')
         self.lamb = 1
 
-    def action(self):
+    def action(self, t_p_o):
         if random.random() < 1.1:
             with torch.no_grad():
                 t_a = self.iLQG.get_global_action(t_p_o)
@@ -39,14 +39,14 @@ class GPS(BASE.BasePolicy):
             n_a = t_a.cpu().numpy()
             return n_a
 
-    def update(self, trajectary):
+    def update(self, *trajectory):
         i = 0
         dyn_loss = None
         rew_loss = None
         self.Dynamics.set_freeze(0)
         while i < self.m_i:
             # print(i)
-            n_p_o, n_a, n_o, n_r, n_d = trajectary
+            n_p_o, n_a, n_o, n_r, n_d = trajectory
             t_p_o = torch.tensor(n_p_o, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             t_o = torch.tensor(n_o, dtype=torch.float32).to(self.device)
@@ -112,4 +112,13 @@ class GPS(BASE.BasePolicy):
 
         return dyn_loss, rew_loss, kld
 
+    def load_model(self, path):
+        self.Dynamics.load_state_dict(torch.load(path))
+        self.Reward.load_state_dict(torch.load(path))
+        self.Policy_net.load_state_dict(torch.load(path))
 
+    def save_model(self, path):
+        torch.save(self.Dynamics, path)
+        torch.save(self.Reward, path)
+        torch.save(self.Policy_net, path)
+        return self.Policy_net, self.Reward, self.Dynamics

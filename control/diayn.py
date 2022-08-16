@@ -51,8 +51,9 @@ class DIAYN:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
-    def get_model(self):
-        return self.discriminator
+    def load_model(self, path):
+        self.discriminator.load_state_dict(torch.load(path))
 
-    def set_model(self, model):
-        self.discriminator.load_state_dict(model.state_dict())
+    def save_model(self, path):
+        torch.save(self.discriminator, path)
+        return self.discriminator

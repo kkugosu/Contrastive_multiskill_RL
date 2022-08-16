@@ -21,20 +21,20 @@ class DDPGPolicy(BASE.BasePolicy):
         self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
 
-    def action(self):
+    def action(self, t_p_o):
         with torch.no_grad():
             t_a = self.upd_policy(t_p_s)
         n_a = t_a.cpu().numpy()
         return n_a
 
-    def update(self, trajectary):
+    def update(self, *trajectory):
         i = 0
         queue_loss = None
         policy_loss = None
         self.base_queue.load_state_dict(self.upd_queue.state_dict())
         self.base_queue.eval()
         while i < self.m_i:
-            n_p_s, n_a, n_s, n_r, n_d = trajectary
+            n_p_s, n_a, n_s, n_r, n_d = trajectory
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
@@ -46,10 +46,10 @@ class DDPGPolicy(BASE.BasePolicy):
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
-                n_a_expect = self.policy.select_action(n_s)
+                n_a_expect = self.action(n_s)
                 t_a_expect = torch.tensor(n_a_expect).to(self.device)
                 dqn_input = torch.cat((t_s, t_a_expect), dim=-1)
-                t_qvalue = self.baseDQN(dqn_input)*(GAMMA**t_trace) + t_r.unsqueeze(-1)
+                t_qvalue = self.base_queue(dqn_input)*(GAMMA**t_trace) + t_r.unsqueeze(-1)
 
             queue_loss = self.criterion(t_p_qvalue, t_qvalue)
 
@@ -71,3 +71,12 @@ class DDPGPolicy(BASE.BasePolicy):
         print("loss2 = ", queue_loss)
 
         return policy_loss, queue_loss
+
+    def load_model(self, path):
+        self.upd_policy.load_state_dict(torch.load(path))
+        self.upd_queue.load_state_dict(torch.load(path))
+
+    def save_model(self, path):
+        torch.save(self.upd_policy, path)
+        torch.save(self.upd_queue, path)
+        return self.upd_policy, self.upd_queue
