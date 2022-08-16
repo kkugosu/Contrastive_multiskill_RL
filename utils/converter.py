@@ -10,9 +10,9 @@ class IndexAct:
     numpy action
     -> torch index
     """
-    def __init__(self, env_name, a_s, precision, b_s):
+    def __init__(self, env_name, a_l, precision, b_s):
         self.env_name = env_name
-        self.a_s = a_s
+        self.a_l = a_l
         self.precision = precision
         self.gauge = 2.0/(self.precision - 1.0)
         self.batch = b_s
@@ -22,7 +22,7 @@ class IndexAct:
             batch = 1
             # only used in predict
             i = 0
-            out = torch.zeros((batch, self.a_s), device=DEVICE)
+            out = torch.zeros((batch, self.a_l), device=DEVICE)
             while i < batch:
                 precision = torch.tensor(self.precision).to(DEVICE)
                 div_1 = torch.div(_input, precision, rounding_mode='floor')
@@ -56,9 +56,9 @@ class IndexAct:
 
     def rand_act(self):
         if self.env_name == "hope":
-            return (np.random.randint(self.precision, size=(self.a_s,))*self.gauge) - 1
+            return (np.random.randint(self.precision, size=(self.a_l,))*self.gauge) - 1
         elif self.env_name == "cart":
-            _a = np.random.randint(self.a_s, size=(1,))
+            _a = np.random.randint(self.a_l, size=(1,))
             return _a.squeeze()
         else:
             print("converter error")
