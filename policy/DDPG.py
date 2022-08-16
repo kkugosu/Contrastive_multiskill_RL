@@ -16,9 +16,9 @@ class DDPGPolicy(BASE.BasePolicy):
         self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
 
-    def action(self, t_p_o):
+    def action(self, t_s):
         with torch.no_grad():
-            t_a = self.upd_policy(t_p_s)
+            t_a = self.upd_policy(t_s)
         n_a = t_a.cpu().numpy()
         return n_a
 
@@ -41,7 +41,7 @@ class DDPGPolicy(BASE.BasePolicy):
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
-                n_a_expect = self.action(n_s)
+                n_a_expect = self.action(t_s)
                 t_a_expect = torch.tensor(n_a_expect).to(self.device)
                 dqn_input = torch.cat((t_s, t_a_expect), dim=-1)
                 t_qvalue = self.base_queue(dqn_input)*(GAMMA**t_trace) + t_r.unsqueeze(-1)

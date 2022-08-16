@@ -11,9 +11,9 @@ class PGPolicy(BASE.BasePolicy):
         self.upd_policy = basic_nn.ProbNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_index_l).to(self.device)
         self.optimizer = torch.optim.SGD(self.upd_policy.parameters(), lr=self.l_r)
 
-    def action(self, t_p_o):
+    def action(self, t_p_s):
         with torch.no_grad():
-            probability = self.upd_policy(t_p_o)
+            probability = self.upd_policy(t_p_s)
 
         t_a_index = torch.multinomial(probability, 1)
         n_a = self.converter.index2act(t_a_index.squeeze(-1), 1)

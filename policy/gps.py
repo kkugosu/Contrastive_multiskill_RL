@@ -26,15 +26,15 @@ class GPS(BASE.BasePolicy):
         self.criterion = nn.MSELoss(reduction='mean')
         self.lamb = 1
 
-    def action(self, t_p_o):
+    def action(self, t_p_s):
         if random.random() < 1.1:
             with torch.no_grad():
-                t_a = self.iLQG.get_global_action(t_p_o)
+                t_a = self.iLQG.get_global_action(t_p_s)
             n_a = t_a.cpu().numpy()
             return n_a
         else:
             with torch.no_grad():
-                t_a = self.iLQG.get_local_action(t_p_o)
+                t_a = self.iLQG.get_local_action(t_p_s)
             n_a = t_a.cpu().numpy()
             return n_a
 
@@ -82,7 +82,7 @@ class GPS(BASE.BasePolicy):
         self.Dynamics.set_freeze(1)
         while i < self.m_i:
             # print(i)
-            n_p_o, n_a, n_o, n_r, n_d = trajectary
+            n_p_o, n_a, n_o, n_r, n_d = trajectory[0]
             t_p_o = torch.tensor(n_p_o, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             with torch.no_grad():
