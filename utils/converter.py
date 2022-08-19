@@ -44,8 +44,8 @@ class IndexAct:
             i = 0
             out = np.zeros(self.batch)
             while i < self.batch:
-                _input[i] = (_input[i]+1)/self.gauge
-                out[i] = _input[i][2] * self.precision**2 + _input[i][1] * self.precision + _input[i][0]
+                new_input = (_input[i]+1)/self.gauge
+                out[i] = new_input[2] * self.precision**2 + new_input[1] * self.precision + new_input[0]
                 i = i + 1
             out = out.squeeze()
             return torch.from_numpy(out).to(DEVICE).type(torch.int64)

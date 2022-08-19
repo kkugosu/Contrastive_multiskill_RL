@@ -20,31 +20,34 @@ class Memory:
         pause = 0
         total_performance = 0
         failure = 0
-        if index is not None:
-            print("simulate after training")
-            self.index = index
-        else:
-            print("simulate for training")
-            self.index = np.random.randint(self.skill_num)
         while total_num < capacity - pause:
+            if index is not None:
+                self.index = index
+            else:
+                self.index = np.random.randint(self.skill_num)
             n_p_o = self.env.reset()
+            tmp_n_p_o = np.zeros(len(n_p_o) * self.skill_num)
+            tmp_n_p_o[self.index * len(n_p_o):(self.index + 1) * len(n_p_o)] = n_p_o
+            n_p_o = tmp_n_p_o
             t = 0
             policy = self.control.policy
-            print("episode start")
             while t < capacity - total_num: #if pg, gain accumulate
-                tmp_n_p_o = np.zeros(len(n_p_o)*self.skill_num)
-                # print(type(tmp_n_p_o))
-                # print(np.shape(tmp_n_p_o))
-                # print(type(n_p_o))
-                # print(np.shape(n_p_o))
-                tmp_n_p_o[self.index*len(n_p_o):(self.index+1)*len(n_p_o)] = n_p_o
-                n_p_o = tmp_n_p_o
+
                 t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
-                n_a = policy.action(t_p_o)
+                with torch.no_grad():
+                    n_a = policy.action(t_p_o)
+
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
-                t_r = self.control.reward(n_o)
-                n_r = torch.from_numpy(t_r)
-                dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d))
+
+                tmp_n_o = np.zeros(len(n_o) * self.skill_num)
+                tmp_n_o[self.index * len(n_o):(self.index + 1) * len(n_o)] = n_o
+                n_o = tmp_n_o
+                t_o = torch.from_numpy(n_o).type(torch.float32).to(device)
+                with torch.no_grad():
+                    t_r = self.control.reward(t_o, self.index)
+                n_r = t_r.cpu().numpy()
+                print("selfindex",self.index)
+                dataset.push(n_p_o, n_a, n_o, n_r, self.index)
                 n_p_o = n_o
                 t = t + 1
                 total_performance = total_performance + n_r

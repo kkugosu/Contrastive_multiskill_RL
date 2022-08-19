@@ -3,6 +3,9 @@ import torch
 import numpy as np
 from NeuralNetwork import basic_nn
 GAMMA = 0.98
+import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 class PGPolicy(BASE.BasePolicy):
@@ -24,11 +27,11 @@ class PGPolicy(BASE.BasePolicy):
         loss = 0
         while i < self.m_i:
             # print(i)
-            n_p_s, n_a, n_s, n_r, n_d = trajectory[0] # next(iter(self.dataloader))
+
+            n_p_s, n_a, n_s, n_r, n_d = np.squeeze(trajectory) # next(iter(self.dataloader))
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a_index = self.converter.act2index(n_a).unsqueeze(axis=-1)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
-
             t_p_weight = torch.gather(self.upd_policy(t_p_s), 1, t_a_index)
             weight = torch.log(t_p_weight)
             p_values = torch.transpose(t_r.unsqueeze(-1), 0, 1)

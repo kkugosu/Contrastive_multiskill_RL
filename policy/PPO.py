@@ -36,7 +36,7 @@ class PPOPolicy(BASE.BasePolicy):
         self.base_policy.eval()
         while i < self.m_i:
             # print(i)
-            n_p_s, n_a, n_s, n_r, n_d = trajectory[0]
+            n_p_s, n_a, n_s, n_r, n_d = np.squeeze(trajectory)
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a_index = self.converter.act2index(n_a).unsqueeze(axis=-1)
             t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)

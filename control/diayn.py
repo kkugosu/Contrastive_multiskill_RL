@@ -45,7 +45,8 @@ class DIAYN:
         while i < memory_iter:
             i = i + 1
             loss2_ary = self.policy.update(trajectory)
-            n_p_s, n_a, n_s, n_r, n_d, skill_idx = trajectory
+            n_p_s, n_a, n_s, n_r, skill_idx = np.squeeze(trajectory)
+            print(skill_idx)
             loss1 = - self.discriminator(n_p_s)[skill_idx] + (1/100)
             self.optimizer.zero_grad()
             loss1.backward()
