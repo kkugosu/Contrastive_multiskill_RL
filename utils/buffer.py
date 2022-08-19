@@ -47,7 +47,7 @@ class Memory:
                     t_r = self.control.reward(t_o, self.index)
                 n_r = t_r.cpu().numpy()
                 print("selfindex",self.index)
-                dataset.push(n_p_o, n_a, n_o, n_r, self.index)
+                dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d)) #we need index.. so have to convert dataset
                 n_p_o = n_o
                 t = t + 1
                 total_performance = total_performance + n_r
