@@ -1,4 +1,4 @@
-from policy import BASE, act
+from policy import BASE
 import torch
 import numpy as np
 from NeuralNetwork import basic_nn
@@ -40,7 +40,7 @@ class PGPolicy(BASE.BasePolicy):
                 param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
             i = i + 1
-        return loss
+        return [loss]
 
     def load_model(self, path):
         self.upd_policy.load_state_dict(torch.load(path))

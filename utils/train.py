@@ -6,7 +6,7 @@ from control import diayn
 
 class Train:
     def __init__(self, train_iter, memory_iter, batch_size, skill_n,
-                 control_n, capacity, env, cont, env_n, e_trace, d_p):
+                 capacity, env, cont, env_n, e_trace, d_p, load_):
 
         self.t_i = train_iter
         self.m_i = memory_iter
@@ -15,22 +15,22 @@ class Train:
         self.cont = cont
         self.env = env
         self.skill_num = skill_n
+        self.load = load_
         self.buffer = buffer.Memory(self.env, self.cont, step_size=e_trace, done_penalty=d_p, skill_num=self.skill_num)
         self.data = dataset.SimData(capacity=self.capacity)
         self.dataloader = dataloader.CustomDataLoader(self.data, batch_size=self.b_s)
 
-        self.writer = SummaryWriter('Result/' + env_n + '/' + control_n)
+        self.writer = SummaryWriter('Result/' + env_n + self.cont.name())
 
-        self.PARAM_PATH = 'Parameter/' + env_n + control_n
+        self.PARAM_PATH = 'Parameter/' + env_n
         print("parameter path is " + self.PARAM_PATH)
 
-        self.PARAM_PATH_TEST = 'Parameter/' + env_n + control_n + '_test'
+        self.PARAM_PATH_TEST = 'Parameter/' + env_n + '_test'
         print("tmp parameter path is " + self.PARAM_PATH_TEST)
 
     def pre_train(self):
-
-        self.cont.load_model(self.PARAM_PATH)
-        c_model = None
+        if self.load == 1:
+            self.cont.load_model(self.PARAM_PATH)
         i = 0
         while i < self.t_i:
             print(i)
@@ -43,15 +43,9 @@ class Train:
                 self.writer.add_scalar("loss " + str(j), loss, i)
                 j = j + 1
             self.writer.add_scalar("performance", self.buffer.get_performance(), i)
-            c_model = self.cont.save_model(self.PARAM_PATH)
+            model = self.cont.save_model(self.PARAM_PATH)
 
         i = 0
-        while i < len(c_model):
-            for param in c_model[i].parameters():
-                print("-----------" + str(i) + "-------------")
-                print(param)
-            i = i + 1
-
         self.env.close()
         self.writer.flush()
         self.writer.close()
@@ -60,6 +54,7 @@ class Train:
         i = 0
         pre_performance = 0
         maxp_index = 0
+        self.cont.load_model(self.PARAM_PATH)
         while i < self.skill_num:
             j = 0
             performance = 0
@@ -71,7 +66,6 @@ class Train:
                 maxp_index = i
                 pre_performance = performance
 
-        self.cont.load_model(self.PARAM_PATH)
         model = None
         i = 0
         while i < self.t_i:

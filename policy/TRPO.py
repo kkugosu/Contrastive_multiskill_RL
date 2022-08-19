@@ -1,4 +1,4 @@
-from policy import BASE, act
+from policy import BASE
 import torch
 import numpy as np
 from torch import nn
@@ -82,7 +82,7 @@ class TRPOPolicy(BASE.BasePolicy):
         print("loss1 = ", policy_loss)
         print("loss2 = ", queue_loss)
 
-        return policy_loss, queue_loss
+        return [policy_loss, queue_loss]
 
     def load_model(self, path):
         self.upd_policy.load_state_dict(torch.load(path))

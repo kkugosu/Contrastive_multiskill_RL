@@ -67,13 +67,13 @@ class ACPolicy(BASE.BasePolicy):
         print("loss1 = ", policy_loss)
         print("loss2 = ", queue_loss)
 
-        return policy_loss, queue_loss
+        return [policy_loss, queue_loss]
 
     def load_model(self, path):
-        self.upd_policy.load_state_dict(torch.load(path))
-        self.upd_queue.load_state_dict(torch.load(path))
+        self.upd_policy.load_state_dict(torch.load(path + self.policy_name + "policy"))
+        self.upd_queue.load_state_dict(torch.load(path + self.policy_name + "queue"))
 
     def save_model(self, path):
-        torch.save(self.upd_policy, path)
-        torch.save(self.upd_queue, path)
+        torch.save(self.upd_policy, path + self.policy_name + "policy")
+        torch.save(self.upd_queue, path + self.policy_name + "queue")
         return self.upd_policy, self.upd_queue

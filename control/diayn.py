@@ -31,7 +31,7 @@ class DIAYN:
         self.policy = policy
         self.device = device
         self.skills = skill_num
-
+        self.cont_name = "diayn"
         self.discriminator = basic_nn.ProbNN(self.s_l * self.skills, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
 
@@ -40,22 +40,32 @@ class DIAYN:
 
     def update(self, memory_iter, *trajectory):
         i = 0
+        loss1 = None
+        loss2_ary = None
         while i < memory_iter:
             i = i + 1
-            self.policy.update(trajectory)
+            loss2_ary = self.policy.update(trajectory)
             n_p_s, n_a, n_s, n_r, n_d, skill_idx = trajectory
-            loss = - self.discriminator(n_p_s)[skill_idx] + (1/100)
+            loss1 = - self.discriminator(n_p_s)[skill_idx] + (1/100)
             self.optimizer.zero_grad()
-            loss.backward()
+            loss1.backward()
             for param in self.discriminator.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
+        loss_ary = loss2_ary.append(loss1)
+        return loss_ary
 
     def load_model(self, path):
-        self.discriminator.load_state_dict(torch.load(path))
+        self.discriminator.load_state_dict(torch.load(path + self.cont_name))
         self.policy.load_model(path)
 
     def save_model(self, path):
-        torch.save(self.discriminator, path)
+        torch.save(self.discriminator, path + self.cont_name)
         self.policy.save_model(path)
         return self.discriminator
+
+    def name(self):
+        return self.cont_name
+
+    def get_policy(self):
+        return self.policy

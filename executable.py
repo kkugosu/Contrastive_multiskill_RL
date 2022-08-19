@@ -12,7 +12,6 @@ if __name__ == "__main__":
     CAPACITY = 10000
     TRAIN_ITER = 100
     MEMORY_ITER = 100
-    HIDDEN_SIZE = 32
     learning_rate = 0.01
     policy = None
     policy_name = None
@@ -60,8 +59,9 @@ if __name__ == "__main__":
         elif env_name == "hope":
             env = gym.make('Hopper-v3')
             valid = 1
-            print("enter hopper precision 3 or 5")
-            precision = get_integer()
+            print("enter hopper precision 3")
+            precision = 3
+            # precision = get_integer()
         else:
             print("error")
 
@@ -73,22 +73,24 @@ if __name__ == "__main__":
     else:
         ACTION_LENGTH = len(env.action_space.sample())
         A_index_L = precision ** ACTION_LENGTH
-
+    """
     valid = 0
     while valid == 0:
         print("model_free : 0, model_based : 1, meta : 2")
+        print(" meta ")
         model_type = get_integer()
         if (model_type >= 0) | (model_type < 3):
             valid = 1
+            
+    """
 
-    print("enter HIDDEN_SIZE recommend 32")
-    HIDDEN_SIZE = get_integer()
-
-    print("enter batchsize recommend 1000")
-    BATCH_SIZE = get_integer()
+    # print("enter batchsize recommend 1000")
+    # BATCH_SIZE = get_integer()
 
     print("enter memory capacity recommend 1000")
+    print("batchsize = capacity")
     CAPACITY = get_integer()
+    BATCH_SIZE = CAPACITY
 
     print("memory reset time recommend 100")
     TRAIN_ITER = get_integer()
@@ -105,9 +107,6 @@ if __name__ == "__main__":
     print("done penalty, if cartpole, recommend 10")
     done_penalty = get_integer()
 
-    print("done penalty, if cartpole, recommend 10")
-    skill_n = get_integer()
-
     print("load previous model 0 or 1")
     load_ = input("->")
 
@@ -117,12 +116,13 @@ if __name__ == "__main__":
     my_converter = converter.IndexAct(env_name, ACTION_LENGTH, precision, BATCH_SIZE)
 
     arg_list = [learning_rate, skill_num, TRAIN_ITER, MEMORY_ITER, STATE_LENGTH, ACTION_LENGTH,
-                A_index_L, my_converter, DEVICE]
+                A_index_L, policy_name, my_converter, DEVICE]
+    model_type = 2
 
-    if model_type == 0:
+    if model_type == 2:
         valid = 0
         while valid == 0:
-            print("enter RL policy, {PG, DQN, AC, TRPO, PPO, DDPG, SAC}")
+            print("enter RL policy, {PG, AC, TRPO, PPO, DDPG, SAC}")
             policy_n = input("->")
             if policy_n == "PG":
                 policy = PG.PGPolicy(*arg_list)
@@ -160,15 +160,17 @@ if __name__ == "__main__":
         print("enter RL control, {diayn}")
         control_name = input("->")
         if control_name == "diayn":
-            cont = diayn.DIAYN(learning_rate, STATE_LENGTH, policy, skill_num, DEVICE)
+            control = diayn.DIAYN(learning_rate, STATE_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
         else:
             print("control name error")
 
-    my_train = train.Train(TRAIN_ITER, MEMORY_ITER, BATCH_SIZE, skill_num, control_name,
-                           CAPACITY, env, control, env_name, e_trace, done_penalty)
-
+    my_train = train.Train(TRAIN_ITER, MEMORY_ITER, BATCH_SIZE, skill_num,
+                           CAPACITY, env, control, env_name, e_trace, done_penalty, load_)
+    print("pre train")
     policy = my_train.pre_train()
+    print("train")
     optimal_policy = my_train.train()
-
+    print("rendering")
     my_rend = render.Render(optimal_policy, env)
     my_rend.rend()

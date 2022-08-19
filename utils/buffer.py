@@ -29,13 +29,18 @@ class Memory:
         while total_num < capacity - pause:
             n_p_o = self.env.reset()
             t = 0
-            policy = self.control.policy(self.index)
-            print("episode end")
+            policy = self.control.policy
+            print("episode start")
             while t < capacity - total_num: #if pg, gain accumulate
                 tmp_n_p_o = np.zeros(len(n_p_o)*self.skill_num)
+                print(tmp_n_p_o)
+                print(np.shape(tmp_n_p_o))
+                print(n_p_o)
+                print(np.shape(n_p_o))
                 tmp_n_p_o[index*len(n_p_o):(index+1)*len(n_p_o)] = n_p_o
                 n_p_o = tmp_n_p_o
-                n_a = policy.action(n_p_o)
+                t_p_o = torch.from_numpy(n_p_o).to(device)
+                n_a = policy.action(t_p_o)
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
                 t_r = self.control.reward(n_o)
                 n_r = torch.from_numpy(t_r)

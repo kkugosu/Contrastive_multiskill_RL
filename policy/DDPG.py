@@ -64,7 +64,7 @@ class DDPGPolicy(BASE.BasePolicy):
         print("loss1 = ", policy_loss)
         print("loss2 = ", queue_loss)
 
-        return policy_loss, queue_loss
+        return [policy_loss, queue_loss]
 
     def load_model(self, path):
         self.upd_policy.load_state_dict(torch.load(path))

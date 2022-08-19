@@ -1,4 +1,4 @@
-from policy import BASE, act, ilqr
+from policy import BASE, ilqr
 import torch
 import numpy as np
 from torch import nn
@@ -109,7 +109,7 @@ class GPS(BASE.BasePolicy):
             i = i + 1
         print("policy loss = ", kld)
 
-        return dyn_loss, rew_loss, kld
+        return [dyn_loss, rew_loss, kld]
 
     def load_model(self, path):
         self.Dynamics.load_state_dict(torch.load(path))
