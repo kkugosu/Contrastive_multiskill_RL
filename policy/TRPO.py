@@ -24,7 +24,7 @@ class TRPOPolicy(BASE.BasePolicy):
             probability = self.upd_policy(t_p_s)
 
         t_a_index = torch.multinomial(probability, 1)
-        n_a = self.converter.index2act(t_a_index.squeeze(-1), 1)
+        n_a = self.converter.index2act(t_a_index.squeeze(-1))
         return n_a
 
     def update(self, *trajectory):

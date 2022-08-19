@@ -33,13 +33,13 @@ class Memory:
             print("episode start")
             while t < capacity - total_num: #if pg, gain accumulate
                 tmp_n_p_o = np.zeros(len(n_p_o)*self.skill_num)
-                print(tmp_n_p_o)
-                print(np.shape(tmp_n_p_o))
-                print(n_p_o)
-                print(np.shape(n_p_o))
-                tmp_n_p_o[index*len(n_p_o):(index+1)*len(n_p_o)] = n_p_o
+                # print(type(tmp_n_p_o))
+                # print(np.shape(tmp_n_p_o))
+                # print(type(n_p_o))
+                # print(np.shape(n_p_o))
+                tmp_n_p_o[self.index*len(n_p_o):(self.index+1)*len(n_p_o)] = n_p_o
                 n_p_o = tmp_n_p_o
-                t_p_o = torch.from_numpy(n_p_o).to(device)
+                t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
                 n_a = policy.action(t_p_o)
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
                 t_r = self.control.reward(n_o)
