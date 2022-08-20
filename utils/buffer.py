@@ -15,7 +15,7 @@ class Memory:
         self.index = None
         self.skill_num = skill_num
 
-    def simulate(self, capacity, dataset, dataloader, index=None):
+    def simulate(self, capacity, dataset, dataloader, index=None, pretrain=1):
         total_num = 0
         pause = 0
         total_performance = 0
@@ -43,9 +43,10 @@ class Memory:
                 tmp_n_o[self.index * len(n_o):(self.index + 1) * len(n_o)] = n_o
                 n_o = tmp_n_o
                 t_o = torch.from_numpy(n_o).type(torch.float32).to(device)
-                with torch.no_grad():
-                    t_r = self.control.reward(t_o, self.index)
-                n_r = t_r.cpu().numpy()
+                if pretrain == 1:
+                    with torch.no_grad():
+                        t_r = self.control.reward(t_o, self.index)
+                    n_r = t_r.cpu().numpy()
                 dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d), self.index) #we need index.. so have to convert dataset
                 n_p_o = n_o
                 t = t + 1

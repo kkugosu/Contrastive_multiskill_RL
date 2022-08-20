@@ -72,8 +72,6 @@ class ACPolicy(BASE.BasePolicy):
             self.optimizer_q.step()
 
             i = i + 1
-        print("loss1 = ", policy_loss.squeeze())
-        print("loss2 = ", queue_loss.squeeze())
 
         return torch.stack((policy_loss.squeeze(), queue_loss.squeeze()))
 

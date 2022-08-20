@@ -58,7 +58,7 @@ class Train:
         maxp_index = 0
         self.cont.load_model(self.PARAM_PATH)
         while i < self.skill_num:
-            performance = self.buffer.simulate(self.capacity, self.data, self.dataloader, index=i)
+            performance = self.buffer.simulate(self.capacity, self.data, self.dataloader, index=i, pretrain=0)
             print(performance)
             if performance > pre_performance:
                 maxp_index = i
@@ -72,7 +72,7 @@ class Train:
         while i < self.t_i:
             print(i)
             i = i + 1
-            self.buffer.simulate(self.capacity, self.data, self.dataloader, maxp_index)
+            self.buffer.simulate(self.capacity, self.data, self.dataloader, index=maxp_index, pretrain=0)
             loss = self.policy.update(self.m_i, next(iter(self.dataloader)))
             print("loss = ", loss)
             j = 0
