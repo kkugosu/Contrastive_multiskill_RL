@@ -17,6 +17,7 @@ class SACPolicy(BASE.BasePolicy):
         self.criterion = nn.MSELoss(reduction='mean')
         self.kl_loss = nn.KLDivLoss(reduction="batchmean")
         self.log_softmax = nn.LogSoftmax(dim=-1)
+        self.policy_name = "SAC"
 
     def action(self, t_s, per_one=1):
         with torch.no_grad():
@@ -29,12 +30,16 @@ class SACPolicy(BASE.BasePolicy):
             n_a = self.converter.index2act(t_a_index.squeeze(-1))
         return n_a
 
-    def update(self, *trajectory):
+    def update(self, memory_iter=0, *trajectory):
         i = 0
         queue_loss = None
         policy_loss = None
         self.base_queue.load_state_dict(self.upd_queue.state_dict())
         self.base_queue.eval()
+        if memory_iter != 0:
+            self.m_i = memory_iter
+        else:
+            self.m_i = 1
         while i < self.m_i:
             # print(i)
             n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
@@ -72,16 +77,16 @@ class SACPolicy(BASE.BasePolicy):
             self.optimizer_q.step()
 
             i = i + 1
-        print("loss1 = ", policy_loss)
-        print("loss2 = ", queue_loss)
+        print("loss1 = ", policy_loss.squeeze())
+        print("loss2 = ", queue_loss.squeeze())
 
-        return [policy_loss, queue_loss]
+        return torch.stack((policy_loss.squeeze(), queue_loss.squeeze()))
 
     def load_model(self, path):
         self.upd_policy.load_state_dict(torch.load(path))
         self.upd_queue.load_state_dict(torch.load(path))
 
     def save_model(self, path):
-        torch.save(self.upd_policy, path)
-        torch.save(self.upd_queue, path)
+        torch.save(self.upd_policy.state_dict(), path)
+        torch.save(self.upd_queue.state_dict(), path)
         return self.upd_policy, self.upd_queue

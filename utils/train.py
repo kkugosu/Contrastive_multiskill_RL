@@ -2,15 +2,17 @@ import torch
 from utils import buffer, dataset, dataloader
 from torch.utils.tensorboard import SummaryWriter
 from control import diayn
+import numpy as np
 
 
 class Train:
-    def __init__(self, train_iter, memory_iter, batch_size, skill_n,
+    def __init__(self, train_iter, memory_iter, batch_size, skill_n, policy,
                  capacity, env, cont, env_n, e_trace, d_p, load_):
 
         self.t_i = train_iter
         self.m_i = memory_iter
         self.capacity = capacity
+        self.policy = policy
         self.b_s = batch_size
         self.cont = cont
         self.env = env
@@ -40,7 +42,7 @@ class Train:
             print("loss = ", loss)
             j = 0
             while j < len(loss):
-                self.writer.add_scalar("loss " + str(j), loss, i)
+                self.writer.add_scalar("loss " + str(j), loss[j], i)
                 j = j + 1
             self.writer.add_scalar("performance", self.buffer.get_performance(), i)
             model = self.cont.save_model(self.PARAM_PATH)
@@ -56,15 +58,14 @@ class Train:
         maxp_index = 0
         self.cont.load_model(self.PARAM_PATH)
         while i < self.skill_num:
-            j = 0
-            performance = 0
-            while j < 10:
-                j = j + 1
-                performance = + self.buffer.simulate(self.capacity, self.data, self.dataloader, index=i)
-            i = i + 1
+            performance = self.buffer.simulate(self.capacity, self.data, self.dataloader, index=i)
+            print(performance)
             if performance > pre_performance:
                 maxp_index = i
                 pre_performance = performance
+            i = i + 1
+        print("max = ", maxp_index)
+        print("select complete")
 
         model = None
         i = 0
@@ -72,17 +73,20 @@ class Train:
             print(i)
             i = i + 1
             self.buffer.simulate(self.capacity, self.data, self.dataloader, maxp_index)
-            loss = self.cont.update(self.m_i, next(iter(self.dataloader)))
+            loss = self.policy.update(self.m_i, next(iter(self.dataloader)))
             print("loss = ", loss)
             j = 0
             while j < len(loss):
-                self.writer.add_scalar("loss " + str(j), loss, i)
+                self.writer.add_scalar("loss " + str(j), loss[j], i)
                 j = j + 1
             self.writer.add_scalar("performance", self.buffer.get_performance(), i)
             model = self.cont.save_model(self.PARAM_PATH)
 
         i = 0
+        print(len(model))
+        print(np.shape(model))
         while i < len(model):
+
             for param in model[i].parameters():
                 print("-----------" + str(i) + "-------------")
                 print(param)

@@ -13,6 +13,7 @@ class PGPolicy(BASE.BasePolicy):
         super().__init__(*args)
         self.upd_policy = basic_nn.ProbNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_index_l).to(self.device)
         self.optimizer = torch.optim.SGD(self.upd_policy.parameters(), lr=self.l_r)
+        self.policy_name = "PG"
 
     def action(self, t_s, per_one=1):
         with torch.no_grad():
@@ -25,9 +26,13 @@ class PGPolicy(BASE.BasePolicy):
             n_a = self.converter.index2act(t_a_index.squeeze(-1))
         return n_a
 
-    def update(self, *trajectory):
+    def update(self, memory_iter=0, *trajectory):
         i = 0
         loss = 0
+        if memory_iter != 0:
+            self.m_i = memory_iter
+        else:
+            self.m_i = 1
         while i < self.m_i:
             # print(i)
 
@@ -46,11 +51,11 @@ class PGPolicy(BASE.BasePolicy):
                 param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
             i = i + 1
-        return loss
+        return loss.squeeze().unsqueeze(-1)
 
     def load_model(self, path):
         self.upd_policy.load_state_dict(torch.load(path))
 
     def save_model(self, path):
-        torch.save(self.upd_policy, path)
-        return self.upd_policy
+        torch.save(self.upd_policy.state_dict(), path)
+        return self.upd_policy,

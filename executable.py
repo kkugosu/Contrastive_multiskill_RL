@@ -14,7 +14,6 @@ if __name__ == "__main__":
     MEMORY_ITER = 100
     learning_rate = 0.01
     policy = None
-    policy_name = None
     env = None
     env_name = None
     control = None
@@ -89,34 +88,41 @@ if __name__ == "__main__":
 
     print("enter memory capacity recommend 1000")
     print("batchsize = capacity")
-    CAPACITY = get_integer()
+    print("capacity = 1000")
+    CAPACITY = 1000 # get_integer()
     BATCH_SIZE = CAPACITY
 
     print("memory reset time recommend 100")
-    TRAIN_ITER = get_integer()
+    print("train iter = 100")
+    TRAIN_ITER = 2
 
     print("train_iteration per memory recommend 10")
-    MEMORY_ITER = get_integer()
+    print("memory iter = 10")
+    MEMORY_ITER = 3
 
     print("enter learning rate recommend 0.01")
-    learning_rate = get_float()
+    print("learning rate = 0.0001")
+    learning_rate = 0.0001
 
     print("enter eligibility trace step, if pg: 100, if gps: 1")
-    e_trace = get_integer()
+    print("e_trace = 1")
+    e_trace = 1
 
     print("done penalty, if cartpole, recommend 10")
-    done_penalty = get_integer()
+    print("done penalty = 1")
+    done_penalty = 1
 
     print("load previous model 0 or 1")
     load_ = input("->")
 
     print("num_skills?")
-    skill_num = get_integer()
+    print("skillnum = 10")
+    skill_num = 10
 
     my_converter = converter.IndexAct(env_name, ACTION_LENGTH, precision, BATCH_SIZE)
 
     arg_list = [learning_rate, skill_num, TRAIN_ITER, MEMORY_ITER, STATE_LENGTH, ACTION_LENGTH,
-                A_index_L, policy_name, my_converter, DEVICE]
+                A_index_L, my_converter, DEVICE]
     model_type = 2
 
     if model_type == 2:
@@ -165,7 +171,7 @@ if __name__ == "__main__":
         else:
             print("control name error")
 
-    my_train = train.Train(TRAIN_ITER, MEMORY_ITER, BATCH_SIZE, skill_num,
+    my_train = train.Train(TRAIN_ITER, MEMORY_ITER, BATCH_SIZE, skill_num, policy,
                            CAPACITY, env, control, env_name, e_trace, done_penalty, load_)
     print("pre train")
     policy = my_train.pre_train()

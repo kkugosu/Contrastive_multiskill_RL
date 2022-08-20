@@ -15,6 +15,7 @@ class DDPGPolicy(BASE.BasePolicy):
         self.optimizer_p = torch.optim.SGD(self.upd_policy.parameters(), lr=self.l_r)
         self.optimizer_q = torch.optim.SGD(self.upd_queue.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
+        self.policy_name = "DDPG"
 
     def action(self, t_s):
         with torch.no_grad():
@@ -22,12 +23,16 @@ class DDPGPolicy(BASE.BasePolicy):
         n_a = t_a.cpu().numpy()
         return n_a
 
-    def update(self, *trajectory):
+    def update(self, memory_iter=0, *trajectory):
         i = 0
         queue_loss = None
         policy_loss = None
         self.base_queue.load_state_dict(self.upd_queue.state_dict())
         self.base_queue.eval()
+        if memory_iter != 0:
+            self.m_i = memory_iter
+        else:
+            self.m_i = 1
         while i < self.m_i:
             n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
@@ -41,7 +46,7 @@ class DDPGPolicy(BASE.BasePolicy):
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
-                n_a_expect = self.action(t_s, 0)
+                n_a_expect = self.action(t_s)
                 t_a_expect = torch.tensor(n_a_expect).to(self.device)
                 dqn_input = torch.cat((t_s, t_a_expect), dim=-1)
                 t_qvalue = self.base_queue(dqn_input)*(GAMMA**t_trace) + t_r.unsqueeze(-1)
@@ -61,16 +66,16 @@ class DDPGPolicy(BASE.BasePolicy):
             self.optimizer_q.step()
             i = i + 1
 
-        print("loss1 = ", policy_loss)
-        print("loss2 = ", queue_loss)
+        print("loss1 = ", policy_loss.squeeze())
+        print("loss2 = ", queue_loss.squeeze())
 
-        return [policy_loss, queue_loss]
+        return torch.stack((policy_loss.squeeze(), queue_loss.squeeze()))
 
     def load_model(self, path):
         self.upd_policy.load_state_dict(torch.load(path))
         self.upd_queue.load_state_dict(torch.load(path))
 
     def save_model(self, path):
-        torch.save(self.upd_policy, path)
-        torch.save(self.upd_queue, path)
+        torch.save(self.upd_policy.state_dict(), path)
+        torch.save(self.upd_queue.state_dict(), path)
         return self.upd_policy, self.upd_queue

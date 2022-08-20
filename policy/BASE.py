@@ -23,7 +23,6 @@ class BasePolicy:
                  s_l,
                  a_l,
                  a_index_l,
-                 policy_name,
                  _converter,
                  device
                  ):
@@ -34,7 +33,6 @@ class BasePolicy:
         self.s_l = s_l
         self.a_l = a_l
         self.a_index_l = a_index_l
-        self.policy_name = policy_name
         self.converter = _converter
         self.device = device
 

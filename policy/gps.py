@@ -25,6 +25,7 @@ class GPS(BASE.BasePolicy):
         self.optimizer_P = torch.optim.SGD(self.Policy_net.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
         self.lamb = 1
+        self.policy_name = "gps"
 
     def action(self, t_p_s):
         if random.random() < 1.1:
@@ -38,11 +39,15 @@ class GPS(BASE.BasePolicy):
             n_a = t_a.cpu().numpy()
             return n_a
 
-    def update(self, *trajectory):
+    def update(self, memory_iter=0, *trajectory):
         i = 0
         dyn_loss = None
         rew_loss = None
         self.Dynamics.set_freeze(0)
+        if memory_iter != 0:
+            self.m_i = memory_iter
+        else:
+            self.m_i = 1
         while i < self.m_i:
             # print(i)
             n_p_o, n_a, n_o, n_r, n_d, sk_idx = np.squeeze(trajectory)
@@ -109,7 +114,7 @@ class GPS(BASE.BasePolicy):
             i = i + 1
         print("policy loss = ", kld)
 
-        return [dyn_loss, rew_loss, kld]
+        return torch.stack((dyn_loss.squeeze(), rew_loss.squeeze(), kld.squeeze()))
 
     def load_model(self, path):
         self.Dynamics.load_state_dict(torch.load(path))

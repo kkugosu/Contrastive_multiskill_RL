@@ -10,13 +10,11 @@ import numpy as np
 
 class DIAYN:
     """
-    o_s observation space
-    a_s action space
-    h_s hidden space
-    lr learning rate
-    t_i training iteration
-    cont policy
-    env_n environment name
+    l_r : learning rate
+    s_l : state length
+    policy : policy
+    skill_num : skill num
+    device : device
     """
 
     def __init__(self,
@@ -44,7 +42,7 @@ class DIAYN:
         loss2_ary = None
         while i < memory_iter:
             i = i + 1
-            loss2_ary = self.policy.update(trajectory)
+            loss2_ary = self.policy.update(1, trajectory)
             n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
             skill_idx = torch.from_numpy(skill_idx).to(self.device).type(torch.int64)
             t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
@@ -56,7 +54,6 @@ class DIAYN:
             for param in self.discriminator.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
-        loss2_ary = loss2_ary.squeeze().unsqueeze(0)
         loss_ary = torch.cat((loss2_ary, loss1.unsqueeze(0)), -1)
         return loss_ary
 
@@ -65,9 +62,9 @@ class DIAYN:
         self.policy.load_model(path)
 
     def save_model(self, path):
-        torch.save(self.discriminator, path + self.cont_name)
-        self.policy.save_model(path)
-        return self.discriminator
+        torch.save(self.discriminator.state_dict(), path + self.cont_name)
+        models = self.policy.save_model(path)
+        return (self.discriminator,) + models
 
     def name(self):
         return self.cont_name
