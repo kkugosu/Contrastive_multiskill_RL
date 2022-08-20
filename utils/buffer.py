@@ -46,8 +46,7 @@ class Memory:
                 with torch.no_grad():
                     t_r = self.control.reward(t_o, self.index)
                 n_r = t_r.cpu().numpy()
-                print("selfindex",self.index)
-                dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d)) #we need index.. so have to convert dataset
+                dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d), self.index) #we need index.. so have to convert dataset
                 n_p_o = n_o
                 t = t + 1
                 total_performance = total_performance + n_r
@@ -66,7 +65,7 @@ class Memory:
 
     def _reward_converter(self, dataset, dataloader):
         t = 0
-        pre_observation, action, observation, reward, done = next(iter(dataloader))
+        pre_observation, action, observation, reward, done, skill_idx = next(iter(dataloader))
         # cal per trajectary to_end length ex) 4 3 2 1 6 5 4 3 2 1
         # set step to upper bound ex) step = 5 ->  4 3 2 1 5 5 4 3 2 1
         global_index = len(done) - 1
@@ -97,7 +96,7 @@ class Memory:
         global_index = 0
         while global_index < len(done):
             dataset.push(pre_observation[global_index], action[global_index], observation[global_index],
-                         reward[global_index], np.float32(done[global_index]))
+                         reward[global_index], np.float32(done[global_index]), skill_idx[global_index])
             global_index += 1
         return dataset
 

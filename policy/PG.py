@@ -14,12 +14,15 @@ class PGPolicy(BASE.BasePolicy):
         self.upd_policy = basic_nn.ProbNN(self.s_l*self.sk_n, self.s_l*self.sk_n, self.a_index_l).to(self.device)
         self.optimizer = torch.optim.SGD(self.upd_policy.parameters(), lr=self.l_r)
 
-    def action(self, t_p_s):
+    def action(self, t_s, per_one=1):
         with torch.no_grad():
-            probability = self.upd_policy(t_p_s)
+            probability = self.upd_policy(t_s)
 
         t_a_index = torch.multinomial(probability, 1)
-        n_a = self.converter.index2act(t_a_index.squeeze(-1))
+        if per_one == 0:
+            n_a = self.converter.index2act(t_a_index.squeeze(-1), per_one)
+        else:
+            n_a = self.converter.index2act(t_a_index.squeeze(-1))
         return n_a
 
     def update(self, *trajectory):
@@ -28,7 +31,7 @@ class PGPolicy(BASE.BasePolicy):
         while i < self.m_i:
             # print(i)
 
-            n_p_s, n_a, n_s, n_r, n_d = np.squeeze(trajectory) # next(iter(self.dataloader))
+            n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory) # next(iter(self.dataloader))
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a_index = self.converter.act2index(n_a).unsqueeze(axis=-1)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
@@ -43,7 +46,7 @@ class PGPolicy(BASE.BasePolicy):
                 param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
             i = i + 1
-        return [loss]
+        return loss
 
     def load_model(self, path):
         self.upd_policy.load_state_dict(torch.load(path))

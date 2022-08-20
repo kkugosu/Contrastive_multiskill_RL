@@ -45,15 +45,19 @@ class DIAYN:
         while i < memory_iter:
             i = i + 1
             loss2_ary = self.policy.update(trajectory)
-            n_p_s, n_a, n_s, n_r, skill_idx = np.squeeze(trajectory)
-            print(skill_idx)
-            loss1 = - self.discriminator(n_p_s)[skill_idx] + (1/100)
+            n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
+            skill_idx = torch.from_numpy(skill_idx).to(self.device).type(torch.int64)
+            t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
+            skill_idx = skill_idx.unsqueeze(-1)
+            out = torch.gather(self.discriminator(t_p_s), 1, skill_idx)
+            loss1 = - torch.sum(out)
             self.optimizer.zero_grad()
             loss1.backward()
             for param in self.discriminator.parameters():
                 param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
-        loss_ary = loss2_ary.append(loss1)
+        loss2_ary = loss2_ary.squeeze().unsqueeze(0)
+        loss_ary = torch.cat((loss2_ary, loss1.unsqueeze(0)), -1)
         return loss_ary
 
     def load_model(self, path):

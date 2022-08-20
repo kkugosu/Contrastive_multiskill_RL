@@ -17,17 +17,25 @@ class IndexAct:
         self.gauge = 2.0/(self.precision - 1.0)
         self.batch = b_s
 
-    def index2act(self, _input):
+    def index2act(self, _input, per_one=1):
         if self.env_name == "hope":
             batch = 1
+            if per_one == 0:
+                batch = self.batch
             # only used in predict
             i = 0
             out = torch.zeros((batch, self.a_l), device=DEVICE)
             while i < batch:
                 precision = torch.tensor(self.precision).to(DEVICE)
-                div_1 = torch.div(_input, precision, rounding_mode='floor')
+                if batch == 1:
+                    div_1 = torch.div(_input, precision, rounding_mode='floor')
+                else:
+                    div_1 = torch.div(_input[i], precision, rounding_mode='floor')
                 div_2 = torch.div(div_1, precision, rounding_mode='floor')
-                a_1 = _input % precision
+                if batch == 1:
+                    a_1 = _input % precision
+                else:
+                    a_1 = _input[i] % precision
                 a_2 = div_1 % precision
                 a_3 = div_2 % precision
                 out[i] = torch.tensor([a_1, a_2, a_3], device=DEVICE)*self.gauge - 1
