@@ -83,8 +83,7 @@ class Train:
             model = self.cont.save_model(self.PARAM_PATH)
 
         i = 0
-        print(len(model))
-        print(np.shape(model))
+
         while i < len(model):
 
             for param in model[i].parameters():
@@ -95,3 +94,6 @@ class Train:
         self.env.close()
         self.writer.flush()
         self.writer.close()
+
+        return self.policy, maxp_index
+
