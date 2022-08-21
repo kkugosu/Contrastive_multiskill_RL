@@ -6,6 +6,7 @@ import torch
 from NeuralNetwork import basic_nn
 from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 import numpy as np
+import math
 
 
 class DIAYN:
@@ -34,7 +35,7 @@ class DIAYN:
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
 
     def reward(self, s_k, skill):
-        return self.discriminator(s_k)[skill] - (1/100)
+        return torch.log(self.discriminator(s_k)[skill]) - math.log((1/self.skills))
 
     def update(self, memory_iter, *trajectory):
         i = 0
@@ -48,7 +49,7 @@ class DIAYN:
             t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
             skill_idx = skill_idx.unsqueeze(-1)
             out = torch.gather(self.discriminator(t_p_s), 1, skill_idx)
-            loss1 = - torch.sum(out)
+            loss1 = - torch.sum(torch.log(out))
             self.optimizer.zero_grad()
             loss1.backward()
             for param in self.discriminator.parameters():

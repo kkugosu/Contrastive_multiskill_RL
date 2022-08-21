@@ -19,7 +19,7 @@ class Memory:
         total_num = 0
         pause = 0
         total_performance = 0
-        failure = 0
+        failure = 1
         while total_num < capacity - pause:
             if index is not None:
                 self.index = index
@@ -30,12 +30,11 @@ class Memory:
             tmp_n_p_o[self.index * len(n_p_o):(self.index + 1) * len(n_p_o)] = n_p_o
             n_p_o = tmp_n_p_o
             t = 0
-            policy = self.control.policy
             while t < capacity - total_num: #if pg, gain accumulate
 
                 t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
                 with torch.no_grad():
-                    n_a = policy.action(t_p_o)
+                    n_a = self.control.policy.action(t_p_o)
 
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
 
@@ -57,9 +56,9 @@ class Memory:
                     failure = failure + 1
                     break
             pause = t
-        self.performance = total_performance #/failure
+        self.performance = total_performance / failure
         self._reward_converter(dataset, dataloader)
-        return total_performance
+        return self.performance
 
     def get_performance(self):
         return self.performance

@@ -69,13 +69,13 @@ class GPS(BASE.BasePolicy):
             self.optimizer_D.zero_grad()
             dyn_loss.backward(retain_graph=True)
             for param in self.Dynamics.parameters():
-                param.grad.data.clamp_(-0.1, 0.1)
+                param.grad.data.clamp_(-1, 1)
             self.optimizer_D.step()
 
             self.optimizer_R.zero_grad()
             rew_loss.backward()
             for param in self.Reward.parameters():
-                param.grad.data.clamp_(-0.1, 0.1)
+                param.grad.data.clamp_(-1, 1)
             self.optimizer_R.step()
 
             i = i + 1

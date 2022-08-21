@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     print("memory reset time recommend 100")
     print("train iter = 100")
-    TRAIN_ITER = 50
+    TRAIN_ITER = 100
 
     print("train_iteration per memory recommend 10")
     print("memory iter = 10")
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     print("enter learning rate recommend 0.01")
     print("learning rate = 0.0001")
-    learning_rate = 0.0001
+    learning_rate = 0.001
 
     print("enter eligibility trace step, if pg: 100, if gps: 1")
     print("e_trace = 1")
