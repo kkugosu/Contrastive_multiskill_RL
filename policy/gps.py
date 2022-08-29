@@ -88,6 +88,7 @@ class GPS(BASE.BasePolicy):
         while i < self.m_i:
             # print(i)
             n_p_o, n_a, n_o, n_r, n_d, sk_idx = np.squeeze(trajectory)
+            n_p_s = self.skill_state_converter(n_p_s, sk_idx)
             t_p_o = torch.tensor(n_p_o, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             with torch.no_grad():

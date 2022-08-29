@@ -31,7 +31,7 @@ class DIAYN:
         self.device = device
         self.skills = skill_num
         self.cont_name = "diayn"
-        self.discriminator = basic_nn.ProbNN(self.s_l * self.skills, self.s_l * self.skills, self.skills).to(self.device)
+        self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.initial_state = None
 

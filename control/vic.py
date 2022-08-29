@@ -31,7 +31,7 @@ class VIC:
         self.device = device
         self.skills = skill_num
         self.cont_name = "vic"
-        self.discriminator = basic_nn.ProbNN(2 * self.s_l * self.skills, self.s_l * self.skills, self.skills).to(
+        self.discriminator = basic_nn.ProbNN(self.skills + self.s_l, self.s_l * self.skills, self.skills).to(
             self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.initial_state = None
@@ -45,13 +45,13 @@ class VIC:
     def set_initial_state(self, state):
         self.initial_state = state
 
-    def policy_regularize(self, s_k):
-        i = 0
-        total_value = 0
-        while i < self.skills:
-            total_value = total_value - self.discriminator(s_k + s_k)[i]*torch.log(self.discriminator(s_k + s_k)[i])
-            i = i + 1
-        return total_value
+    def state_entropy(self, s_k, n_d):
+        entropy = - torch.dot(self.discriminator(s_k + s_k), torch.log(self.discriminator(s_k + s_k)))
+        out = torch.gather(entropy, 1, n_d)
+        return out
+
+    def get_index_pair(self, n_p_s, n_d, skill_idx):
+        return pair, skill_idx
 
     def update(self, memory_iter, *trajectory):
         i = 0
@@ -62,11 +62,14 @@ class VIC:
             loss2_ary = self.policy.update(1, trajectory)
 
             n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
+            pair, skill_idx = self.get_index_pair(n_p_s, n_d, skill_idx)
             skill_idx = torch.from_numpy(skill_idx).to(self.device).type(torch.int64)
             t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
             skill_idx = skill_idx.unsqueeze(-1)
-            out = torch.gather(self.discriminator(t_p_s), 1, skill_idx)
+            out = self.discriminator(pair)[skill_idx]
+            out = out - self.state_entropy(t_p_s, n_d)
             loss1 = - torch.sum(torch.log(out))
+
             self.optimizer.zero_grad()
             loss1.backward()
             for param in self.discriminator.parameters():

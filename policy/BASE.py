@@ -1,5 +1,6 @@
 import torch
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+import numpy as np
 
 
 class BasePolicy:
@@ -36,6 +37,11 @@ class BasePolicy:
         self.converter = _converter
         self.device = device
 
+    def skill_state_converter(self, n_p_o, index):
+        tmp_n_p_o = np.zeros(len(n_p_o) * self.sk_n)
+        tmp_n_p_o[index * len(n_p_o):(index + 1) * len(n_p_o)] = n_p_o
+        n_p_o = tmp_n_p_o
+        return n_p_o
 
 
 

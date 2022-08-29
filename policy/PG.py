@@ -37,6 +37,7 @@ class PGPolicy(BASE.BasePolicy):
             # print(i)
 
             n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory) # next(iter(self.dataloader))
+            n_p_s = self.skill_state_converter(n_p_s, sk_idx)
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a_index = self.converter.act2index(n_a).unsqueeze(axis=-1)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)

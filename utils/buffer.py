@@ -2,6 +2,7 @@ import torch
 import numpy as np
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 GAMMA = 0.98
+from utils.converter import StateConvert
 
 
 class Memory:
@@ -14,6 +15,8 @@ class Memory:
         self.control = control
         self.index = None
         self.skill_num = skill_num
+        self.s_l = len(env.observation_space.sample())
+        self.sk_state = StateConvert(self.s_l, self.skill_num)
 
     def simulate(self, capacity, dataset, dataloader, index=None, pretrain=1):
         total_num = 0
@@ -26,9 +29,6 @@ class Memory:
             else:
                 self.index = np.random.randint(self.skill_num)
             n_p_o = self.env.reset()
-            tmp_n_p_o = np.zeros(len(n_p_o) * self.skill_num)
-            tmp_n_p_o[self.index * len(n_p_o):(self.index + 1) * len(n_p_o)] = n_p_o
-            n_p_o = tmp_n_p_o
             t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
             self.control.set_initial_state(t_p_o)
             t = 0
@@ -38,15 +38,11 @@ class Memory:
                     n_a = self.control.policy.action(t_p_o)
 
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
-
-                tmp_n_o = np.zeros(len(n_o) * self.skill_num)
-                tmp_n_o[self.index * len(n_o):(self.index + 1) * len(n_o)] = n_o
-                n_o = tmp_n_o
-                t_o = torch.from_numpy(n_o).type(torch.float32).to(device)
                 if pretrain == 1:
                     with torch.no_grad():
-                        t_r = self.control.reward(t_o, self.index, n_d)
+                        t_r = self.control.reward(t_p_o, index, n_d)
                     n_r = t_r.cpu().numpy()
+
                 dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d), self.index) # we need index.. so have to convert dataset
                 n_p_o = n_o
                 t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)

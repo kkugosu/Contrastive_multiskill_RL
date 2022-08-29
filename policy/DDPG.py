@@ -35,6 +35,7 @@ class DDPGPolicy(BASE.BasePolicy):
             self.m_i = 1
         while i < self.m_i:
             n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
+            n_p_s = self.skill_state_converter(n_p_s, sk_idx)
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
