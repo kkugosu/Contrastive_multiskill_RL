@@ -33,9 +33,13 @@ class DIAYN:
         self.cont_name = "diayn"
         self.discriminator = basic_nn.ProbNN(self.s_l * self.skills, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
+        self.initial_state = None
 
-    def reward(self, s_k, skill):
+    def reward(self, s_k, skill, n_d):
         return torch.log(self.discriminator(s_k)[skill]) - math.log((1/self.skills))
+
+    def set_initial_state(self, state):
+        self.initial_state = state
 
     def update(self, memory_iter, *trajectory):
         i = 0

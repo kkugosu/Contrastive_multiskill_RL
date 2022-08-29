@@ -29,10 +29,11 @@ class Memory:
             tmp_n_p_o = np.zeros(len(n_p_o) * self.skill_num)
             tmp_n_p_o[self.index * len(n_p_o):(self.index + 1) * len(n_p_o)] = n_p_o
             n_p_o = tmp_n_p_o
+            t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
+            self.control.set_initial_state(t_p_o)
             t = 0
-            while t < capacity - total_num: #if pg, gain accumulate
+            while t < capacity - total_num: # if pg, gain accumulate
 
-                t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
                 with torch.no_grad():
                     n_a = self.control.policy.action(t_p_o)
 
@@ -44,10 +45,11 @@ class Memory:
                 t_o = torch.from_numpy(n_o).type(torch.float32).to(device)
                 if pretrain == 1:
                     with torch.no_grad():
-                        t_r = self.control.reward(t_o, self.index)
+                        t_r = self.control.reward(t_o, self.index, n_d)
                     n_r = t_r.cpu().numpy()
-                dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d), self.index) #we need index.. so have to convert dataset
+                dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d), self.index) # we need index.. so have to convert dataset
                 n_p_o = n_o
+                t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
                 t = t + 1
                 total_performance = total_performance + n_r
                 if n_d:
