@@ -28,9 +28,6 @@ class SMM(BASE.BaseControl):
     def reward(self, state_1, state_2, skill, done):
         return torch.log(self.discriminator(s_k)[skill]) - math.log((1/self.skills))
 
-    def set_initial_state(self, state):
-        self.initial_state = state
-
     @staticmethod
     def state_penalty(*trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
@@ -68,9 +65,3 @@ class SMM(BASE.BaseControl):
         torch.save(self.discriminator.state_dict(), path + self.cont_name)
         models = self.policy.save_model(path)
         return (self.discriminator,) + models
-
-    def name(self):
-        return self.cont_name
-
-    def get_policy(self):
-        return self.policy

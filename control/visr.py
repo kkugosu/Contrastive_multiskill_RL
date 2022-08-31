@@ -31,9 +31,6 @@ class VISR(BASE.BaseControl):
         return torch.log(self.discriminator(s_k_1 + s_k_2)[skill])
         # we need to revise later
 
-    def set_initial_state(self, state):
-        self.initial_state = state
-
     def convert(self, state, index):
         tmp_n_p_o = np.zeros(len(state) * self.skills)
         tmp_n_p_o[index * len(state):(index + 1) * len(state)] = state
@@ -71,9 +68,3 @@ class VISR(BASE.BaseControl):
         torch.save(self.discriminator.state_dict(), path + self.cont_name)
         models = self.policy.save_model(path)
         return (self.discriminator,) + models
-
-    def name(self):
-        return self.cont_name
-
-    def get_policy(self):
-        return self.policy

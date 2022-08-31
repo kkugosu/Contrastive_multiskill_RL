@@ -28,9 +28,6 @@ class DIAYN(BASE.BaseControl):
     def reward(self, state_1, state_2, skill, done):
         return torch.log(self.discriminator(s_k)[skill]) - math.log((1/self.skills))
 
-    def set_initial_state(self, state):
-        self.initial_state = state
-
     def update(self, memory_iter, *trajectory):
         i = 0
         loss1 = None
@@ -61,8 +58,3 @@ class DIAYN(BASE.BaseControl):
         models = self.policy.save_model(path)
         return (self.discriminator,) + models
 
-    def name(self):
-        return self.cont_name
-
-    def get_policy(self):
-        return self.policy

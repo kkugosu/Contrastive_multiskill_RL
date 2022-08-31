@@ -30,9 +30,6 @@ class VALOR(BASE.BaseControl):
     def reward(self, state_1, state_2, skill, done):
         return torch.log(self.discriminator(s_k)[skill]) - math.log((1/self.skills))
 
-    def set_initial_state(self, state):
-        self.initial_state = state
-
     def get_index_pair(self, n_p_s, n_d, skill_idx):
         return pair, skill_idx
 
@@ -67,8 +64,3 @@ class VALOR(BASE.BaseControl):
         models = self.policy.save_model(path)
         return (self.discriminator,) + models
 
-    def name(self):
-        return self.cont_name
-
-    def get_policy(self):
-        return self.policy

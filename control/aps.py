@@ -31,8 +31,8 @@ class APS(BASE.BaseControl):
 
     def reward(self, state_1, state_2, skill, done):
         # state1 + state2 + skill -> skills
-        self.convert()
-        return torch.log(self.discriminator(s_k_1 + s_k_2)[skill])
+        self.convert(state_1 + state_2, skill)
+        return torch.log(self.discriminator(state_1 + state_2)[skill])
         # we need to revise later
 
     def convert(self, state, index):
@@ -42,9 +42,6 @@ class APS(BASE.BaseControl):
         t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(self.device)
         return t_p_o
         # convert like policy
-
-    def set_initial_state(self, state):
-        self.initial_state = state
 
     def state_encoding(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
@@ -93,9 +90,3 @@ class APS(BASE.BaseControl):
         torch.save(self.discriminator.state_dict(), path + self.cont_name)
         models = self.policy.save_model(path)
         return (self.discriminator,) + models
-
-    def name(self):
-        return self.cont_name
-
-    def get_policy(self):
-        return self.policy

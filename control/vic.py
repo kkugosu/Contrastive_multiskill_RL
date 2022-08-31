@@ -32,9 +32,6 @@ class VIC(BASE.BaseControl):
         else:
             return torch.log(self.discriminator(s_k + self.initial_state)[skill])
 
-    def set_initial_state(self, state):
-        self.initial_state = state
-
     def state_entropy(self, s_k, n_d):
         entropy = - torch.dot(self.discriminator(s_k + s_k), torch.log(self.discriminator(s_k + s_k)))
         out = torch.gather(entropy, 1, n_d)
@@ -76,9 +73,3 @@ class VIC(BASE.BaseControl):
         torch.save(self.discriminator.state_dict(), path + self.cont_name)
         models = self.policy.save_model(path)
         return (self.discriminator,) + models
-
-    def name(self):
-        return self.cont_name
-
-    def get_policy(self):
-        return self.policy
