@@ -28,8 +28,8 @@ class SMM(BASE.BaseControl):
     def reward(self, state_1, state_2, skill, done):
         return torch.log(self.discriminator(s_k)[skill]) - math.log((1/self.skills))
 
-    @staticmethod
     def state_penalty(*trajectory):
+        # as far as subtract less penalty
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
         distance = mseloss(n_p_s, n_p_s.T)
         density = torch.exp(-distance)

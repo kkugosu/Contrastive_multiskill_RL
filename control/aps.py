@@ -32,7 +32,7 @@ class APS(BASE.BaseControl):
     def reward(self, state_1, state_2, skill, done):
         # state1 + state2 + skill -> skills
         self.convert(state_1 + state_2, skill)
-        return torch.log(self.discriminator(state_1 + state_2)[skill])
+        return self.discriminator(state_1 + state_2)[skill]
         # we need to revise later
 
     def convert(self, state, index):
@@ -60,6 +60,13 @@ class APS(BASE.BaseControl):
         self.key_optimizer.step()
         self.query_optimizer.step()
 
+    def state_penalty(self, *trajectory):
+        # as far as gain more advantage
+        n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
+        distance_mat = torch.square(self.key(n_p_s) - self.query(n_p_s).T)
+        sorted_mat = torch.sort(distance_mat)
+        return sorted_mat[-10:-1].sum(-1)
+
     def update(self, memory_iter, *trajectory):
         i = 0
         loss1 = None
@@ -72,7 +79,7 @@ class APS(BASE.BaseControl):
             skill_idx = torch.from_numpy(skill_idx).to(self.device).type(torch.int64)
             t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
             skill_idx = skill_idx.unsqueeze(-1)
-            out = torch.gather(self.discriminator(t_p_s), 1, skill_idx)
+            out = self.reward(t_p_o, n_s, skill_idx)
             loss1 = - torch.sum(torch.log(out))
             self.optimizer.zero_grad()
             loss1.backward()

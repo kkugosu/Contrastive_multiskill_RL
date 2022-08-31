@@ -7,7 +7,7 @@ from utils.converter import StateConvert
 
 class Memory:
 
-    def __init__(self, env, control, step_size, done_penalty, skill_num):
+    def __init__(self, env, control, step_size, done_penalty, skill_num, dataset, dataloader):
         self.env = env
         self.step_size = step_size
         self.done_penalty = done_penalty
@@ -17,8 +17,10 @@ class Memory:
         self.skill_num = skill_num
         self.s_l = len(env.observation_space.sample())
         self.sk_state = StateConvert(self.s_l, self.skill_num)
+        self.dataset = dataset
+        self.dataloader = dataloader
 
-    def simulate(self, capacity, dataset, dataloader, index=None, pretrain=1):
+    def simulate(self, capacity, index=None, pretrain=1):
         total_num = 0
         pause = 0
         total_performance = 0
@@ -30,7 +32,6 @@ class Memory:
                 self.index = np.random.randint(self.skill_num)
             n_p_o = self.env.reset()
             t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
-            self.control.set_initial_state(t_p_o)
             t = 0
             while t < capacity - total_num: # if pg, gain accumulate
 
@@ -43,7 +44,8 @@ class Memory:
                         t_r = self.control.reward(t_p_o, index, n_d)
                     n_r = t_r.cpu().numpy()
 
-                dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d), self.index) # we need index.. so have to convert dataset
+                self.dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d), self.index)
+                # we need index.. so have to convert dataset
                 n_p_o = n_o
                 t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
                 t = t + 1
@@ -55,19 +57,27 @@ class Memory:
                     break
             pause = t
         self.performance = total_performance / failure
-        state_penalty_reward = self.control.state_penalty(next(iter(dataloader)))
-        self.reward_adder(state_penalty_reward, dataset)
-        self._reward_converter(dataset, dataloader)
+        state_penalty_reward = self.control.state_penalty(next(iter(self.dataloader)))
+        self.reward_adder(state_penalty_reward)
+        self._reward_converter()
         return self.performance
 
-    def reward_adder(self, reward, dataset):
+    def reward_adder(self, _reward):
+        pre_observation, action, observation, reward, done, skill_idx = next(iter(self.dataloader))
+        reward = reward + _reward
+        global_index = 0
+        while global_index < len(done):
+            self.dataset.push(pre_observation[global_index], action[global_index], observation[global_index],
+                              reward[global_index], np.float32(done[global_index]), skill_idx[global_index])
+            global_index += 1
+        return self.dataset
 
     def get_performance(self):
         return self.performance
 
-    def _reward_converter(self, dataset, dataloader):
+    def _reward_converter(self):
         t = 0
-        pre_observation, action, observation, reward, done, skill_idx = next(iter(dataloader))
+        pre_observation, action, observation, reward, done, skill_idx = next(iter(self.dataloader))
         # cal per trajectary to_end length ex) 4 3 2 1 6 5 4 3 2 1
         # set step to upper bound ex) step = 5 ->  4 3 2 1 5 5 4 3 2 1
         global_index = len(done) - 1
@@ -97,8 +107,8 @@ class Memory:
             global_index += 1
         global_index = 0
         while global_index < len(done):
-            dataset.push(pre_observation[global_index], action[global_index], observation[global_index],
-                         reward[global_index], np.float32(done[global_index]), skill_idx[global_index])
+            self.dataset.push(pre_observation[global_index], action[global_index], observation[global_index],
+                              reward[global_index], np.float32(done[global_index]), skill_idx[global_index])
             global_index += 1
-        return dataset
+        return self.dataset
 

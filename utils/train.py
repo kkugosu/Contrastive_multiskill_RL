@@ -18,10 +18,11 @@ class Train:
         self.env = env
         self.skill_num = skill_n
         self.load = load_
-        self.buffer = buffer.Memory(self.env, self.cont, step_size=e_trace, done_penalty=d_p, skill_num=self.skill_num)
+
         self.data = dataset.SimData(capacity=self.capacity)
         self.dataloader = dataloader.CustomDataLoader(self.data, batch_size=self.b_s)
-
+        self.buffer = buffer.Memory(self.env, self.cont, step_size=e_trace, done_penalty=d_p, skill_num=self.skill_num,
+                                    dataset=self.data, dataloader=self.dataloader)
         self.writer = SummaryWriter('Result/' + env_n + self.cont.name())
 
         self.PARAM_PATH = 'Parameter/' + env_n

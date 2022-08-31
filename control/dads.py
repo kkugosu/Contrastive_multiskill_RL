@@ -26,18 +26,10 @@ class DADS(BASE.BaseControl):
         self.initial_state = None
 
     def reward(self, state_1, state_2, skill, done):
-        # state1 + state2 + skill -> skills
-        self.convert()
-        return torch.log(self.discriminator(s_k_1 + s_k_2)[skill])
-        # we need to revise later
+        # state1 + state2 -> skills
 
-    def convert(self, state, index):
-        tmp_n_p_o = np.zeros(len(state) * self.skills)
-        tmp_n_p_o[index * len(state):(index + 1) * len(state)] = state
-        n_p_o = tmp_n_p_o
-        t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(self.device)
-        return t_p_o
-        # convert like policy
+        return self.discriminator(s_k_1 + s_k_2)[skill]
+        # we need to revise later
 
     def update(self, memory_iter, *trajectory):
         i = 0
