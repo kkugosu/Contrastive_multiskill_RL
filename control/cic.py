@@ -1,16 +1,13 @@
-import gym
-from torch.utils.tensorboard import SummaryWriter
+
 from utils import converter
-from utils import dataset, dataloader
 import torch
 from NeuralNetwork import basic_nn
-from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 import numpy as np
 import math
 from control import BASE
 
 
-class APS(BASE.BaseControl):
+class CIC(BASE.BaseControl):
     """
     l_r : learning rate
     s_l : state length
@@ -20,34 +17,27 @@ class APS(BASE.BaseControl):
     """
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.cont_name = "aps"
+        self.cont_name = "cic"
         self.key = basic_nn.ValueNN(self.s_l, self.s_l, self.skills).to(self.device)
         self.query = basic_nn.ValueNN(self.s_l, self.s_l, self.skills).to(self.device)
-        self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.skills, self.skills).to(self.device)
+        self.discriminator = basic_nn.ProbNN(2*self.s_l*self.skills, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.key_optimizer = torch.optim.SGD(self.key.parameters(), lr=self.l_r)
         self.query_optimizer = torch.optim.SGD(self.query.parameters(), lr=self.l_r)
         self.initial_state = None
 
     def reward(self, state_1, state_2, skill, done):
-        # state1 + state2 + skill -> skills
-        self.convert(state_1 + state_2, skill)
-        return self.discriminator(state_1 + state_2)[skill]
-        # we need to revise later
+        # state1 + state2 -> skills
 
-    def convert(self, state, index):
-        tmp_n_p_o = np.zeros(len(state) * self.skills)
-        tmp_n_p_o[index * len(state):(index + 1) * len(state)] = state
-        n_p_o = tmp_n_p_o
-        t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(self.device)
-        return t_p_o
-        # convert like policy
+        return self.discriminator(s_k_1 + s_k_2)[skill]
+        # we need to revise later
 
     def state_encoding(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
-        base_batch_batch_matrix = torch.matmul(self.key(n_p_s).T, self.query(n_p_s)).exp()
-        output = torch.gather(base_batch_batch_matrix, 1, torch.from_numpy(np.arange(1000)).T)
+        base_batch_batch_matrix = torch.matmul(self.key(n_p_s + n_s).T, self.query(all_skills)).exp()
+        output = torch.gather(base_batch_batch_matrix, 1, skill_idx)
         bellow = base_batch_batch_matrix.sum(-1) - output
+        # size = batchsize*1
         output = output/bellow
         loss = -output/len(n_p_s)
         self.key_optimizer.zero_grad()
@@ -63,7 +53,7 @@ class APS(BASE.BaseControl):
     def state_penalty(self, *trajectory):
         # as far as gain more advantage
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
-        distance_mat = torch.square(self.key(n_p_s) - self.query(n_p_s).T)
+        distance_mat = torch.square(self.key(n_p_s + n_s) - self.key(n_p_s + n_s).T)
         sorted_mat = torch.sort(distance_mat)
         return sorted_mat[-10:-1].sum(-1)
 

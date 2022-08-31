@@ -1,10 +1,7 @@
-import gym
-from torch.utils.tensorboard import SummaryWriter
+
 from utils import converter
-from utils import dataset, dataloader
 import torch
 from NeuralNetwork import basic_nn
-from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 import numpy as np
 import math
 from control import BASE
@@ -33,6 +30,7 @@ class VIC(BASE.BaseControl):
             return torch.log(self.discriminator(s_k + self.initial_state)[skill])
 
     def state_entropy(self, s_k, n_d):
+        #s0 based policy class entropy
         entropy = - torch.dot(self.discriminator(s_k + s_k), torch.log(self.discriminator(s_k + s_k)))
         out = torch.gather(entropy, 1, n_d)
         return out

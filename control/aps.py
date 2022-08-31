@@ -1,10 +1,7 @@
-import gym
-from torch.utils.tensorboard import SummaryWriter
+
 from utils import converter
-from utils import dataset, dataloader
 import torch
 from NeuralNetwork import basic_nn
-from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 import numpy as np
 import math
 from control import BASE
@@ -23,25 +20,17 @@ class APS(BASE.BaseControl):
         self.cont_name = "aps"
         self.key = basic_nn.ValueNN(self.s_l, self.s_l, self.skills).to(self.device)
         self.query = basic_nn.ValueNN(self.s_l, self.s_l, self.skills).to(self.device)
-        self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.skills, self.skills).to(self.device)
+        self.discriminator = basic_nn.ProbNN(2*self.s_l*self.skills, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.key_optimizer = torch.optim.SGD(self.key.parameters(), lr=self.l_r)
         self.query_optimizer = torch.optim.SGD(self.query.parameters(), lr=self.l_r)
         self.initial_state = None
 
     def reward(self, state_1, state_2, skill, done):
-        # state1 + state2 + skill -> skills
-        self.convert(state_1 + state_2, skill)
-        return self.discriminator(state_1 + state_2)[skill]
-        # we need to revise later
+        # state1 + state2 -> skills
 
-    def convert(self, state, index):
-        tmp_n_p_o = np.zeros(len(state) * self.skills)
-        tmp_n_p_o[index * len(state):(index + 1) * len(state)] = state
-        n_p_o = tmp_n_p_o
-        t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(self.device)
-        return t_p_o
-        # convert like policy
+        return self.discriminator(s_k_1 + s_k_2)[skill]
+        # we need to revise later
 
     def state_encoding(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
