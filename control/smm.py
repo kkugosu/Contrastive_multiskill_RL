@@ -7,9 +7,10 @@ from NeuralNetwork import basic_nn
 from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 import numpy as np
 import math
+from control import BASE
 
 
-class SMM:
+class SMM(BASE.BaseControl):
     """
     l_r : learning rate
     s_l : state length
@@ -17,29 +18,26 @@ class SMM:
     skill_num : skill num
     device : device
     """
-
-    def __init__(self,
-                 l_r,
-                 s_l,
-                 policy,
-                 skill_num,
-                 device
-                 ):
-        self.l_r = l_r
-        self.s_l = s_l
-        self.policy = policy
-        self.device = device
-        self.skills = skill_num
+    def __init__(self, *args) -> None:
+        super().__init__(*args)
         self.cont_name = "smm"
         self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.initial_state = None
 
-    def reward(self, s_k, skill, n_d):
+    def reward(self, state_1, state_2, skill, done):
         return torch.log(self.discriminator(s_k)[skill]) - math.log((1/self.skills))
 
     def set_initial_state(self, state):
         self.initial_state = state
+
+    @staticmethod
+    def state_penalty(*trajectory):
+        n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
+        distance = mseloss(n_p_s, n_p_s.T)
+        density = torch.exp(-distance)
+        reward = torch.sum(density) - torch.mean(density)
+        return reward
 
     def update(self, memory_iter, *trajectory):
         i = 0

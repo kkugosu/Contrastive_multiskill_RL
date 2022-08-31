@@ -8,9 +8,10 @@ from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 import numpy as np
 import math
 from torch import nn
+from control import BASE
 
 
-class VALOR:
+class VALOR(BASE.BaseControl):
     """
     l_r : learning rate
     s_l : state length
@@ -18,26 +19,15 @@ class VALOR:
     skill_num : skill num
     device : device
     """
-
-    def __init__(self,
-                 l_r,
-                 s_l,
-                 policy,
-                 skill_num,
-                 device
-                 ):
-        self.l_r = l_r
-        self.s_l = s_l
-        self.policy = policy
-        self.device = device
-        self.skills = skill_num
+    def __init__(self, *args) -> None:
+        super().__init__(*args)
         self.cont_name = "valor"
         self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.initial_state = None
         self.bid_lstm = nn.LSTM(input_size=self.s_l, hidden_size=self.s_l, bidirectional=True)
 
-    def reward(self, s_k, skill, n_d):
+    def reward(self, state_1, state_2, skill, done):
         return torch.log(self.discriminator(s_k)[skill]) - math.log((1/self.skills))
 
     def set_initial_state(self, state):

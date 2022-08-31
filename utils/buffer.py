@@ -55,8 +55,12 @@ class Memory:
                     break
             pause = t
         self.performance = total_performance / failure
+        state_penalty_reward = self.control.state_penalty(next(iter(dataloader)))
+        self.reward_adder(state_penalty_reward, dataset)
         self._reward_converter(dataset, dataloader)
         return self.performance
+
+    def reward_adder(self, reward, dataset):
 
     def get_performance(self):
         return self.performance

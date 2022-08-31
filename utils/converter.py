@@ -120,14 +120,3 @@ class NAFPolicy:
         return mean, psd
 
 
-class StateConvert:
-    def __init__(self, sl, skill):
-        self.sl = sl
-        self.skill = skill
-
-    def convert(self, state, index):
-        tmp_n_p_o = np.zeros(len(state) * self.skill)
-        tmp_n_p_o[index * len(state):(index + 1) * len(state)] = state
-        n_p_o = tmp_n_p_o
-        t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(DEVICE)
-        return t_p_o

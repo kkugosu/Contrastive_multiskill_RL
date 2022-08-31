@@ -7,9 +7,10 @@ from NeuralNetwork import basic_nn
 from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 import numpy as np
 import math
+from control import BASE
 
 
-class VIC:
+class VIC(BASE.BaseControl):
     """
     l_r : learning rate
     s_l : state length
@@ -17,26 +18,15 @@ class VIC:
     skill_num : skill num
     device : device
     """
-
-    def __init__(self,
-                 l_r,
-                 s_l,
-                 policy,
-                 skill_num,
-                 device
-                 ):
-        self.l_r = l_r
-        self.s_l = s_l
-        self.policy = policy
-        self.device = device
-        self.skills = skill_num
+    def __init__(self, *args) -> None:
+        super().__init__(*args)
         self.cont_name = "vic"
         self.discriminator = basic_nn.ProbNN(self.skills + self.s_l, self.s_l * self.skills, self.skills).to(
             self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.initial_state = None
 
-    def reward(self, s_k, skill, n_d):
+    def reward(self, state_1, state_2, skill, done):
         if n_d == 0:
             return 0
         else:

@@ -1,9 +1,10 @@
 import torch
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 import numpy as np
+from abc import *
 
 
-class BasePolicy:
+class BasePolicy(metaclass=ABCMeta):
     """
     l_r learning rate
     sk_n = skill num
