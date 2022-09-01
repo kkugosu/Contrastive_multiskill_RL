@@ -22,12 +22,14 @@ class BaseControl(metaclass=ABCMeta):
     def __init__(self,
                  l_r,
                  s_l,
+                 a_l,
                  policy,
                  skill_num,
                  device
                  ):
         self.l_r = l_r
         self.s_l = s_l
+        self.a_l = a_l
         self.policy = policy
         self.device = device
         self.skills = skill_num

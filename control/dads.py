@@ -13,6 +13,7 @@ class DADS(BASE.BaseControl):
         super().__init__(*args)
         self.cont_name = "dads"
         self.discriminator = basic_nn.ProbNN(self.s_l*self.skills, self.s_l * self.skills, self.s_l).to(self.device)
+        # state + skill -> state
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
 

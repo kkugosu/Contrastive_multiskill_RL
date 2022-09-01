@@ -166,7 +166,7 @@ if __name__ == "__main__":
         print("enter RL control, {diayn}")
         control_name = input("->")
         if control_name == "diayn":
-            control = diayn.DIAYN(learning_rate, STATE_LENGTH, policy, skill_num, DEVICE)
+            control = diayn.DIAYN(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
             valid = 1
         else:
             print("control name error")

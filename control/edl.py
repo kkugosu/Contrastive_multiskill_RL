@@ -21,7 +21,7 @@ class EDL(BASE.BaseControl):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
         return self.decoder(n_p_s, skill_idx)
 
-    def train_encoding(self, *trajectory):
+    def encoder_decoder_training(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
         skill = self.encoder(n_p_s)
         skill = skill + torch.randn_like(skill) * 0.1
