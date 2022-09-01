@@ -34,16 +34,9 @@ class Memory:
             t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
             t = 0
             while t < capacity - total_num: # if pg, gain accumulate
-
                 with torch.no_grad():
                     n_a = self.control.policy.action(t_p_o)
-
                 n_o, n_r, n_d, n_i = self.env.step(n_a)
-                if pretrain == 1:
-                    with torch.no_grad():
-                        t_r = self.control.reward(t_p_o, index, n_d)
-                    n_r = t_r.cpu().numpy()
-
                 self.dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d), self.index)
                 # we need index.. so have to convert dataset
                 n_p_o = n_o
@@ -57,8 +50,11 @@ class Memory:
                     break
             pause = t
         self.performance = total_performance / failure
-        state_penalty_reward = self.control.state_penalty(next(iter(self.dataloader)))
-        self.reward_adder(state_penalty_reward)
+        if pretrain == 1:
+            reward = self.control.reward(next(iter(self.dataloader)))
+            self.reward_adder(reward)
+        else:
+            pass
         self._reward_converter()
         return self.performance
 

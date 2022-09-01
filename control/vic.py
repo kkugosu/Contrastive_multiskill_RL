@@ -8,26 +8,18 @@ from control import BASE
 
 
 class VIC(BASE.BaseControl):
-    """
-    l_r : learning rate
-    s_l : state length
-    policy : policy
-    skill_num : skill num
-    device : device
-    """
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "vic"
         self.discriminator = basic_nn.ProbNN(self.skills + self.s_l, self.s_l * self.skills, self.skills).to(
             self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
-        self.initial_state = None
 
     def reward(self, state_1, state_2, skill, done):
         if n_d == 0:
             return 0
         else:
-            return torch.log(self.discriminator(s_k + self.initial_state)[skill])
+            return torch.log(self.discriminator(s_k + self.tmp_state)[skill])
 
     def state_entropy(self, s_k, n_d):
         #s0 based policy class entropy

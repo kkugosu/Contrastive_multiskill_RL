@@ -3,24 +3,15 @@ from utils import converter
 import torch
 from NeuralNetwork import basic_nn
 import numpy as np
-import math
 from control import BASE
 
 
 class VISR(BASE.BaseControl):
-    """
-    l_r : learning rate
-    s_l : state length
-    policy : policy
-    skill_num : skill num
-    device : device
-    """
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "visr"
         self.discriminator = basic_nn.ProbNN(2*self.s_l*self.skills, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
-        self.initial_state = None
 
     def reward(self, state_1, state_2, skill, done):
         # state1 + state2 + skill -> skills

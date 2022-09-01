@@ -8,13 +8,6 @@ from control import BASE
 
 
 class CIC(BASE.BaseControl):
-    """
-    l_r : learning rate
-    s_l : state length
-    policy : policy
-    skill_num : skill num
-    device : device
-    """
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "cic"
@@ -24,7 +17,6 @@ class CIC(BASE.BaseControl):
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.key_optimizer = torch.optim.SGD(self.key.parameters(), lr=self.l_r)
         self.query_optimizer = torch.optim.SGD(self.query.parameters(), lr=self.l_r)
-        self.initial_state = None
 
     def reward(self, state_1, state_2, skill, done):
         # state1 + state2 -> skills

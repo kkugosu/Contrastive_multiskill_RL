@@ -1,29 +1,18 @@
-import gym
-from torch.utils.tensorboard import SummaryWriter
+
 from utils import converter
-from utils import dataset, dataloader
 import torch
 from NeuralNetwork import basic_nn
-from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 import numpy as np
 import math
 from control import BASE
 
 
 class SMM(BASE.BaseControl):
-    """
-    l_r : learning rate
-    s_l : state length
-    policy : policy
-    skill_num : skill num
-    device : device
-    """
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "smm"
         self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.skills, self.skills).to(self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
-        self.initial_state = None
 
     def reward(self, state_1, state_2, skill, done):
         return torch.log(self.discriminator(s_k)[skill]) - math.log((1/self.skills))

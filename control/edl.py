@@ -8,13 +8,6 @@ from torch import nn
 
 
 class EDL(BASE.BaseControl):
-    """
-    l_r : learning rate
-    s_l : state length
-    policy : policy
-    skill_num : skill num
-    device : device
-    """
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "edl"
@@ -22,7 +15,6 @@ class EDL(BASE.BaseControl):
         self.decoder = basic_nn.ProbNN(self.skills, self.s_l + self.skills, self.s_l)
         self.optimizer_e = torch.optim.SGD(self.encoder.parameters(), lr=self.l_r)
         self.optimizer_d = torch.optim.SGD(self.decoder.parameters(), lr=self.l_r)
-        self.initial_state = None
         self.criterion = nn.MSELoss(reduction='mean')
 
     def reward(self, state_1, state_2, skill, done):
