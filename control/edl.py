@@ -17,17 +17,14 @@ class EDL(BASE.BaseControl):
         self.optimizer_d = torch.optim.SGD(self.decoder.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
 
-    def reward(self, state_1, state_2, skill, done):
-        return self.decoder(state_1, skill)
-
-    @staticmethod
-    def _rep(mu):
-        return mu + torch.randn_like(mu) * 0.1
+    def reward(self, *trajectory):
+        n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
+        return self.decoder(n_p_s, skill_idx)
 
     def train_encoding(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
         skill = self.encoder(n_p_s)
-        skill = self._rep(skill)
+        skill = skill + torch.randn_like(skill) * 0.1
         output = self.decoder(skill, n_p_s)
         self.optimizer_e.zero_grad()
         self.optimizer_d.zero_grad()

@@ -15,20 +15,21 @@ class VIC(BASE.BaseControl):
             self.device)
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
 
-    def reward(self, state_1, state_2, skill, done):
-        if n_d == 0:
-            return 0
-        else:
-            return torch.log(self.discriminator(s_k + self.tmp_state)[skill])
-
-    def state_entropy(self, s_k, n_d):
-        #s0 based policy class entropy
-        entropy = - torch.dot(self.discriminator(s_k + s_k), torch.log(self.discriminator(s_k + s_k)))
-        out = torch.gather(entropy, 1, n_d)
-        return out
-
-    def get_index_pair(self, n_p_s, n_d, skill_idx):
-        return pair, skill_idx
+    def reward(self, *trajectory):
+        n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
+        i = 0
+        skill_maybe = torch.tensor(size=(1000, self.skills))
+        initial_skill_maybe = torch.tensor(size=(1000, self.skills))
+        tmp_state = n_p_s[i]
+        while i < len(n_d):
+            if n_d[i] == 1:
+                tmp_state = n_p_s[i]
+            skill_maybe[i] = self.discriminator(tmp_state + n_p_s[i])
+            initial_skill_maybe = self.discriminator(tmp_state + tmp_state)
+            i = i + 1
+        entropy = torch.sum(-initial_skill_maybe*torch.log(initial_skill_maybe))
+        out = torch.gather(self.discriminator(skill_maybe), 1, skill_idx)
+        return out + entropy
 
     def update(self, memory_iter, *trajectory):
         i = 0
@@ -37,16 +38,7 @@ class VIC(BASE.BaseControl):
         while i < memory_iter:
             i = i + 1
             loss2_ary = self.policy.update(1, trajectory)
-
-            n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
-            pair, skill_idx = self.get_index_pair(n_p_s, n_d, skill_idx)
-            skill_idx = torch.from_numpy(skill_idx).to(self.device).type(torch.int64)
-            t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
-            skill_idx = skill_idx.unsqueeze(-1)
-            out = self.discriminator(pair)[skill_idx]
-            out = out - self.state_entropy(t_p_s, n_d)
-            loss1 = - torch.sum(torch.log(out))
-
+            loss1 = self.reward(trajectory)
             self.optimizer.zero_grad()
             loss1.backward()
             for param in self.discriminator.parameters():

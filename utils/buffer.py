@@ -51,7 +51,8 @@ class Memory:
             pause = t
         self.performance = total_performance / failure
         if pretrain == 1:
-            reward = self.control.reward(next(iter(self.dataloader)))
+            with torch.no_grad():
+                reward = self.control.reward(next(iter(self.dataloader)))
             self.reward_adder(reward)
         else:
             pass
