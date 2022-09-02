@@ -22,23 +22,23 @@ you can choose belows
 ## Algorithm
 
 
-> [diayn](https://github.com/kkugosu/RL_META/blob/master/docs/diayn.md)
+> [diayn](https://github.com/kkugosu/RL_META/blob/master/Docs/diayn.md)
 >
-> [vic](https://github.com/kkugosu/RL_META/blob/master/docs/vic.md)
+> [vic](https://github.com/kkugosu/RL_META/blob/master/Docs/vic.md)
 >
-> [valor](https://github.com/kkugosu/RL_META/blob/master/docs/valor.md)
+> [valor](https://github.com/kkugosu/RL_META/blob/master/Docs/valor.md)
 >
-> [visr](https://github.com/kkugosu/RL_META/blob/master/docs/visr.md)
+> [visr](https://github.com/kkugosu/RL_META/blob/master/Docs/visr.md)
 >
-> [smm](https://github.com/kkugosu/RL_META/blob/master/docs/smm.md)
+> [smm](https://github.com/kkugosu/RL_META/blob/master/Docs/smm.md)
 >
-> [edl](https://github.com/kkugosu/RL_META/blob/master/docs/edl.md)
+> [edl](https://github.com/kkugosu/RL_META/blob/master/Docs/edl.md)
 >
-> [dads](https://github.com/kkugosu/RL_META/blob/master/docs/dads.md)
+> [dads](https://github.com/kkugosu/RL_META/blob/master/Docs/dads.md)
 >
-> [aps](https://github.com/kkugosu/RL_META/blob/master/docs/aps.md)
+> [aps](https://github.com/kkugosu/RL_META/blob/master/Docs/aps.md)
 >
-> [cic](https://github.com/kkugosu/RL_META/blob/master/docs/cic.md)
+> [cic](https://github.com/kkugosu/RL_META/blob/master/Docs/cic.md)
 
 ## Experiment environment
 
