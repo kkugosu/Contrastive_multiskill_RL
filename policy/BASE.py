@@ -1,5 +1,4 @@
 import torch
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 import numpy as np
 from abc import *
 
@@ -8,7 +7,6 @@ class BasePolicy(metaclass=ABCMeta):
     """
     l_r learning rate
     sk_n = skill num
-    t_i training iteration
     m_i memory iteration
     s_l state length
     a_l action length
@@ -20,7 +18,6 @@ class BasePolicy(metaclass=ABCMeta):
     def __init__(self,
                  l_r,
                  sk_n,
-                 t_i,
                  m_i,
                  s_l,
                  a_l,
@@ -30,7 +27,6 @@ class BasePolicy(metaclass=ABCMeta):
                  ):
         self.l_r = l_r
         self.sk_n = sk_n
-        self.t_i = t_i
         self.m_i = m_i
         self.s_l = s_l
         self.a_l = a_l

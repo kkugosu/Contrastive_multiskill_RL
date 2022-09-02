@@ -2,11 +2,9 @@ import torch
 import numpy as np
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 GAMMA = 0.98
-from utils.converter import StateConvert
 
 
 class Memory:
-
     def __init__(self, env, control, step_size, done_penalty, skill_num, dataset, dataloader):
         self.env = env
         self.step_size = step_size
@@ -16,52 +14,50 @@ class Memory:
         self.index = None
         self.skill_num = skill_num
         self.s_l = len(env.observation_space.sample())
-        self.sk_state = StateConvert(self.s_l, self.skill_num)
         self.dataset = dataset
         self.dataloader = dataloader
 
     def simulate(self, capacity, index=None, pretrain=1):
         total_num = 0
         pause = 0
-        total_performance = 0
         failure = 1
         while total_num < capacity - pause:
             if index is not None:
                 self.index = index
             else:
                 self.index = np.random.randint(self.skill_num)
-            n_p_o = self.env.reset()
-            t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
+            n_p_s = self.env.reset()
             t = 0
             while t < capacity - total_num: # if pg, gain accumulate
                 with torch.no_grad():
-                    n_a = self.control.policy.action(t_p_o)
-                n_o, n_r, n_d, n_i = self.env.step(n_a)
-                self.dataset.push(n_p_o, n_a, n_o, n_r, np.float32(n_d), self.index)
+                    t_p_s = torch.from_numpy(n_p_s).type(torch.float32).to(device)
+                    n_a = self.control.policy.action(t_p_s)
+                n_s, n_r, n_d, n_i = self.env.step(n_a)
+                self.dataset.push(n_p_s, n_a, n_s, n_r, np.float32(n_d), self.index)
                 # we need index.. so have to convert dataset
-                n_p_o = n_o
-                t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(device)
+                n_p_s = n_s
                 t = t + 1
-                total_performance = total_performance + n_r
                 if n_d:
                     total_num += t
                     t = 0
                     failure = failure + 1
                     break
             pause = t
-        self.performance = total_performance / failure
         if pretrain == 1:
             with torch.no_grad():
                 reward = self.control.reward(next(iter(self.dataloader)))
-            self.reward_adder(reward)
+            self.reward_converter(reward)
         else:
             pass
+        pre_observation, action, observation, reward, done, skill_idx = next(iter(self.dataloader))
+        total_performance = torch.sum(reward)
+        self.performance = total_performance / failure
         self._reward_converter()
         return self.performance
 
-    def reward_adder(self, _reward):
+    def reward_converter(self, _reward):
         pre_observation, action, observation, reward, done, skill_idx = next(iter(self.dataloader))
-        reward = reward + _reward
+        reward = _reward
         global_index = 0
         while global_index < len(done):
             self.dataset.push(pre_observation[global_index], action[global_index], observation[global_index],
