@@ -8,19 +8,24 @@ class CIC(BASE.BaseControl):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "cic"
-        self.key = basic_nn.ValueNN(self.s_l, self.s_l, self.sk_n).to(self.device)
-        self.query = basic_nn.ValueNN(self.s_l, self.s_l, self.sk_n).to(self.device)
+        self.key = basic_nn.ValueNN(2 * self.s_l, self.s_l, self.sk_n).to(self.device)
+        self.query = basic_nn.ValueNN(self.sk_n, self.sk_n, self.sk_n).to(self.device)
         self.key_optimizer = torch.optim.SGD(self.key.parameters(), lr=self.l_r)
         self.query_optimizer = torch.optim.SGD(self.query.parameters(), lr=self.l_r)
 
     def encoder_decoder_training(self, *trajectory):
-        n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
-        base_batch_batch_matrix = torch.matmul(self.key(n_p_s + n_s).T, self.query(all_skills)).exp()
-        output = torch.gather(base_batch_batch_matrix, 1, skill_idx)
+        n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
+        t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
+        t_s = torch.from_numpy(n_s).to(self.device).type(torch.float32)
+        sk_idx = torch.from_numpy(sk_idx).to(self.device).type(torch.int64)
+        state_pair = torch.cat((t_p_s, t_s), -1)
+        all_skill = torch.eye(10).expand(1000, 10, 10)
+        base_batch_batch_matrix = torch.matmul(self.key(state_pair).unsqueeze(-2), self.query(all_skill)).exp()
+        output = torch.gather(base_batch_batch_matrix, 1, sk_idx)
         bellow = base_batch_batch_matrix.sum(-1) - output
         # size = batchsize*1
         output = output/bellow
-        loss = -output/len(n_p_s)
+        loss = -torch.sum(output)
         self.key_optimizer.zero_grad()
         self.query_optimizer.zero_grad()
         loss.backward()
@@ -33,8 +38,11 @@ class CIC(BASE.BaseControl):
 
     def reward(self, *trajectory):
         # as far as gain more advantage
-        n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
-        distance_mat = torch.square(self.key(n_p_s + n_s) - self.key(n_p_s + n_s).T)
+        n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
+        t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
+        t_s = torch.from_numpy(n_s).to(self.device).type(torch.float32)
+        state_pair = torch.cat((t_p_s, t_s), -1)
+        distance_mat = torch.square(self.key(state_pair) - self.key(state_pair).T)
         sorted_mat = torch.sort(distance_mat)
         return sorted_mat[-10:-1].sum(-1)
 

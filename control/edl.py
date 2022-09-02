@@ -21,19 +21,21 @@ class EDL(BASE.BaseControl):
 
     def encoder_decoder_training(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
-        skill = self.encoder(n_p_s)
+        t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
+        skill = self.encoder(t_p_s)
         skill = skill + torch.randn_like(skill) * 0.1
-        output = self.decoder(skill, n_p_s)
+        output = self.decoder(skill)
+        loss = self.criterion(output, t_p_s)
         self.optimizer_e.zero_grad()
         self.optimizer_d.zero_grad()
-        output.sum().backward()
+        loss.backward()
         for param in self.encoder.parameters():
             param.grad.data.clamp_(-1, 1)
         for param in self.decoder.parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer_e.step()
         self.optimizer_d.step()
-        return output.sum()
+        return loss
 
     def update(self, memory_iter, *trajectory):
         i = 0

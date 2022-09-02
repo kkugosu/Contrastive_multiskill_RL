@@ -8,7 +8,7 @@ class VISR(BASE.BaseControl):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "visr"
-        self.discriminator = basic_nn.ProbNN((self.a_l + self.s_l) * self.sk_n, self.s_l * self.a_l, 1).to(
+        self.discriminator = basic_nn.ProbNN((self.a_l + self.s_l) * self.sk_n, self.s_l + self.a_l, 1).to(
             self.device)
         # state + action + skill -> reward
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
