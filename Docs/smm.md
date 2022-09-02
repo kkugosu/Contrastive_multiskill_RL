@@ -5,7 +5,7 @@ this paper learns skills from state and add penalty to high density state
 
 $$1. \ sample \ skill \ from \ p(z)$$
 
-$$2. \ step \ one \ step \ in \ environment$$
+$$2. \ simulate \ in \ environment \ while \ memory \ become \ full$$
 
 $$3. \ compute \ q_\phi(z | s) \ from \ discriminator \ q_\phi $$
 
