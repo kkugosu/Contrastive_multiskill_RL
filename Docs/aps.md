@@ -5,12 +5,14 @@ we embed state to abstract state and maximize entropy from state distribution an
 
 $$1. \ sample \ skill \ from \ p(z)$$
 
-$$2. \ step \ one \ step \ in \ environment$$
+$$2. \ simulate \ in \ environment \ while \ memory \ become \ full$$
 
-$$3. \ compute \ q_\phi(z | s_t) \ from \ discriminator \ q_\phi$$
+$$3. \ learn \ state \ embedding \ from \ key \ and \ query \ network$$
 
-$$4. \ improve \ value \ log(q_\phi(z | s_t)) - log(p(z)) \ by \ update \ \phi$$
+$$3. \ compute \ q_\phi(z | s, a) \ from \ discriminator \ q_\phi$$
 
-$$5. \ set \ reward \ as \ log(q_\phi(z | s_t)) - log(p(z))$$
+$$4. \ improve \ value \ log(q_\phi(z | s, a)) \ by \ update \ \phi$$
+
+$$5. \ set \ reward \ as \ log(q_\phi(z | s, a)) + entropy(s))$$
 
 $$6. \ update \ sac \ with \ policy \ z \ to \ maximize \ reward$$
