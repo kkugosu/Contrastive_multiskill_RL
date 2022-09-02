@@ -1,6 +1,6 @@
 ## DADS
 
-this paper learns skills from "initial state and last state pair"
+this paper learns skills from "current state and next state pair"
 
 $$1. \ sample \ skill \ from \ p(z)$$
 
