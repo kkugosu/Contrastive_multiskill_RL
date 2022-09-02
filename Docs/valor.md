@@ -1,7 +1,7 @@
 
 ## VALOR
 
-this paper learns skills from "initial state and last state pair"
+this paper learns skills from trajectary using "lstm"
 
 $$1. \ sample \ skill \ from \ p(z)$$
 
