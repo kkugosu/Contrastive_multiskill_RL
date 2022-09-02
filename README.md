@@ -57,4 +57,29 @@ you can choose belows
 
 ## REPO
 
-https://arxiv.org/pdf/1802.06070.pdf
+vic
+https://arxiv.org/abs/1611.07507
+
+diayn
+https://arxiv.org/pdf/1802.06070
+
+valor
+https://arxiv.org/abs/1807.10299
+
+visc
+https://arxiv.org/abs/1906.05030
+
+smm
+https://arxiv.org/abs/1906.05274
+
+dads
+https://arxiv.org/abs/1907.01657
+
+edl
+https://arxiv.org/abs/2002.03647
+
+aps
+https://arxiv.org/abs/2108.13956
+
+cic
+https://arxiv.org/abs/2202.00161
