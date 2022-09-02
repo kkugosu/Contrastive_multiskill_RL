@@ -5,7 +5,7 @@ this paper learns skills from trajectary using "lstm"
 
 $$1. \ sample \ skill \ from \ p(z)$$
 
-$$2. \ step \ one \ step \ in \ environment$$
+$$2. \ simulate \ in \ environment \ while \ memory \ become \ full$$
 
 $$3. \ compute \ q_\phi(z | \tau) \ from \ discriminator \ q_\phi, use \ q_\phi \ as \ lstm $$
 
