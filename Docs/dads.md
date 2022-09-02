@@ -4,7 +4,7 @@ this paper learns skills from "current state and next state pair"
 
 $$1. \ sample \ skill \ from \ p(z)$$
 
-$$2. \ step \ one \ step \ in \ environment$$
+$$2. \ simulate \ in \ environment \ while \ memory \ become \ full$$
 
 $$3. \ compute \ q_\phi(s' | s, z) \ from \ discriminator \ q_\phi $$
 
