@@ -1,1 +1,16 @@
 
+## VALOR
+
+this paper learns skills from "initial state and last state pair"
+
+$$1. \ sample \ skill \ from \ p(z)$$
+
+$$2. \ step \ one \ step \ in \ environment$$
+
+$$3. \ compute \ q_\phi(z | \tau) \ from \ discriminator \ q_\phi, use q_\phi as lstm $$
+
+$$4. \ improve \ value \ q_\phi(z | s_0, s_t)\ - \ q_\phi(z | s_0, s_0) \ by \ update \ \phi$$
+
+$$5. \ set \ reward \ as \ q_\phi(z | s_0, s_t)\ - \ q_\phi(z | s_0, s_0)$$
+
+$$6. \ update \ sac \ with \ policy \ z \ to \ maximize \ reward$$
