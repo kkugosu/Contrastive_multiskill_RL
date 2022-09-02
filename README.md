@@ -11,6 +11,7 @@ python executable.py
 you can choose belows
 * environments 
 * policy 
+* control
 * batch size
 * memory reset time
 * train time per memory
