@@ -12,25 +12,30 @@ class VALOR(BASE.BaseControl):
         self.cont_name = "valor"
         self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l + self.sk_n, self.sk_n).to(self.device)
         # hidden state -> skill
-        self.bid_lstm = nn.LSTM(input_size=self.s_l, hidden_size=self.s_l, bidirectional=True).to(self.device)
+        self.lstm = nn.LSTM(input_size=self.s_l, hidden_size=self.s_l).to(self.device)
         # state_seq -> hidden state
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
-        self.optimizer = torch.optim.SGD(self.bid_lstm.parameters(), lr=self.l_r)
+        self.optimizer = torch.optim.SGD(self.lstm.parameters(), lr=self.l_r)
 
     def reward(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
+        t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
         i = 0
-        skill_maybe = torch.tensor(size=(1000, self.skills))
-        tmp_state = []
+        skill_maybe = torch.zeros(size=(1000, self.sk_n))
+        tmp_state = None
         while i < len(n_d):
+
             if n_d[i] == 1:
-                tmp_state = []
-            tmp_state.append(n_p_s[i])
-            embedded_state = self.bid_lstm(tmp_state)
+                tmp_state = None
+            if tmp_state is None:
+                tmp_state = t_p_s[i].unsqueeze(0)
+            else:
+                tmp_state = torch.cat((tmp_state, t_p_s[i].unsqueeze(0)), 0)
+            embedded_state = self.lstm(tmp_state)[-1]
             skill_maybe[i] = self.discriminator(embedded_state)
             i = i + 1
         out = torch.gather(self.discriminator(skill_maybe), 1, skill_idx)
-        return out - math.log((1/self.sk_n))
+        return torch.log(out - (1/self.sk_n))
 
     def update(self, memory_iter, *trajectory):
         i = 0
@@ -40,7 +45,7 @@ class VALOR(BASE.BaseControl):
             i = i + 1
             loss2_ary = self.policy.update(1, trajectory)
             output = self.reward(trajectory)
-            loss1 = - torch.sum(torch.log(output))
+            loss1 = - torch.sum(output)
             self.optimizer.zero_grad()
             loss1.backward()
             for param in self.discriminator.parameters():

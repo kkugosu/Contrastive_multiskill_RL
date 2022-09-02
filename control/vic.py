@@ -15,15 +15,18 @@ class VIC(BASE.BaseControl):
 
     def reward(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
+        t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
         i = 0
-        skill_maybe = torch.tensor(size=(1000, self.skills))
-        initial_skill_maybe = torch.tensor(size=(1000, self.skills))
-        tmp_state = n_p_s[i]
+        skill_maybe = torch.zeros(size=(1000, self.sk_n))
+        initial_skill_maybe = torch.zeros(size=(1000, self.sk_n)) + 1/self.sk_n
+        tmp_state = t_p_s[0].unsqueeze(0)
         while i < len(n_d):
             if n_d[i] == 1:
-                tmp_state = n_p_s[i]
-            skill_maybe[i] = self.discriminator(tmp_state + n_p_s[i])
-            initial_skill_maybe = self.discriminator(tmp_state + tmp_state)
+                tmp_state = t_p_s[i].unsqueeze(0)
+                initial_pair = torch.cat((tmp_state, tmp_state), 0)
+                initial_skill_maybe[i] = self.discriminator(initial_pair)
+            current_pair = torch.cat((tmp_state, t_p_s[i].unsqueeze(0)), 0)
+            skill_maybe[i] = self.discriminator(current_pair)
             i = i + 1
         entropy = torch.sum(-initial_skill_maybe*torch.log(initial_skill_maybe))
         out = torch.gather(self.discriminator(skill_maybe), 1, skill_idx)
