@@ -2,7 +2,7 @@
 
 ## Installation
 ```
-git clone https://github.com/kkugosu/RL_BASIC.git
+git clone https://github.com/kkugosu/RL_META.git
 ```
 ## Experiment
 ```
