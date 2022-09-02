@@ -1,7 +1,5 @@
 import torch
-from torch.utils.data import DataLoader
 import torch.nn as nn
-import numpy as np
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
 print("device", device)

@@ -1,6 +1,4 @@
 import torch
-import numpy as np
-from torchvision.transforms import ToTensor, Lambda
 from torch import nn
 
 
@@ -21,6 +19,7 @@ class ValueNN(nn.Module):
     def forward(self, input_element):
         output = self.linear_relu_stack(input_element)
         return output
+
 
 class ProbNN(nn.Module):
 

@@ -11,7 +11,8 @@ class SMM(BASE.BaseControl):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "smm"
-        self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.skills, self.skills).to(self.device)
+        self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.sk_n, self.sk_n).to(self.device)
+        # state -> skill
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
 
     def reward(self, *trajectory):

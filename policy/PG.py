@@ -2,10 +2,10 @@ from policy import BASE
 import torch
 import numpy as np
 from NeuralNetwork import basic_nn
-GAMMA = 0.98
 import os
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+GAMMA = 0.98
 
 
 class PGPolicy(BASE.BasePolicy):

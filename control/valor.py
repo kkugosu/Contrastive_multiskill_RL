@@ -12,9 +12,12 @@ class VALOR(BASE.BaseControl):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "valor"
-        self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.skills, self.skills).to(self.device)
+        self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.sk_n, self.sk_n).to(self.device)
+        # hidden state -> skill
         self.bid_lstm = nn.LSTM(input_size=self.s_l, hidden_size=self.s_l, bidirectional=True).to(self.device)
+        # state_seq -> hidden state
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
+        self.optimizer = torch.optim.SGD(self.bid_lstm.parameters(), lr=self.l_r)
 
     def reward(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
@@ -29,7 +32,7 @@ class VALOR(BASE.BaseControl):
             skill_maybe[i] = self.discriminator(embedded_state)
             i = i + 1
         out = torch.gather(self.discriminator(skill_maybe), 1, skill_idx)
-        return out - math.log((1/self.skills))
+        return out - math.log((1/self.sk_n))
 
     def update(self, memory_iter, *trajectory):
         i = 0

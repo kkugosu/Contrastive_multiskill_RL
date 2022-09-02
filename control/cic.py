@@ -11,8 +11,8 @@ class CIC(BASE.BaseControl):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "cic"
-        self.key = basic_nn.ValueNN(self.s_l, self.s_l, self.skills).to(self.device)
-        self.query = basic_nn.ValueNN(self.s_l, self.s_l, self.skills).to(self.device)
+        self.key = basic_nn.ValueNN(self.s_l, self.s_l, self.sk_n).to(self.device)
+        self.query = basic_nn.ValueNN(self.s_l, self.s_l, self.sk_n).to(self.device)
         self.key_optimizer = torch.optim.SGD(self.key.parameters(), lr=self.l_r)
         self.query_optimizer = torch.optim.SGD(self.query.parameters(), lr=self.l_r)
 

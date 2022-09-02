@@ -12,7 +12,7 @@ class DADS(BASE.BaseControl):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "dads"
-        self.discriminator = basic_nn.ProbNN(self.s_l*self.skills, self.s_l * self.skills, self.s_l).to(self.device)
+        self.discriminator = basic_nn.ProbNN(self.s_l*self.sk_n, self.s_l * self.sk_n, self.s_l).to(self.device)
         # state + skill -> state
         self.optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
@@ -21,7 +21,7 @@ class DADS(BASE.BaseControl):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
         skill_idx = torch.from_numpy(skill_idx).to(self.device).type(torch.int64)
         skill_idx = skill_idx.unsqueeze(-1)
-        tmp_n_p_o = np.zeros((len(n_p_s), self.s_l * self.skills))
+        tmp_n_p_o = np.zeros((len(n_p_s), self.s_l * self.sk_n))
         # batch, statelen, skilllen
         i = 0
         while i < len(n_p_s):
@@ -31,11 +31,11 @@ class DADS(BASE.BaseControl):
         n_p_o = tmp_n_p_o
         t_p_o = torch.from_numpy(n_p_o).type(torch.float32).to(self.device)
         main_prob = torch.exp(-self.criterion(n_s, self.discriminator(t_p_o)))
-        tmp_n_p_o = np.zeros((len(n_p_s), self.skills, self.s_l * self.skills))
+        tmp_n_p_o = np.zeros((len(n_p_s), self.sk_n, self.s_l * self.sk_n))
         i = 0
         while i < len(n_p_s):
             j = 0
-            while j < self.skills:
+            while j < self.sk_n:
                 tmp_n_p_o[i][j * self.s_l:(j + 1) * self.s_l] = n_p_s[i]
                 j = j + 1
             i = i + 1

@@ -11,8 +11,8 @@ class EDL(BASE.BaseControl):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "edl"
-        self.encoder = basic_nn.ProbNN(self.s_l, self.s_l + self.skills, self.skills)
-        self.decoder = basic_nn.ProbNN(self.skills, self.s_l + self.skills, self.s_l)
+        self.encoder = basic_nn.ProbNN(self.s_l, self.s_l + self.sk_n, self.sk_n)
+        self.decoder = basic_nn.ProbNN(self.sk_n, self.s_l + self.sk_n, self.s_l)
         self.optimizer_e = torch.optim.SGD(self.encoder.parameters(), lr=self.l_r)
         self.optimizer_d = torch.optim.SGD(self.decoder.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
@@ -43,7 +43,7 @@ class EDL(BASE.BaseControl):
         loss2_ary = None
         while i < memory_iter:
             i = i + 1
-            loss1 = self.train_encoding(trajectory)
+            loss1 = self.encoder_decoder_training(trajectory)
             loss2_ary = self.policy.update(1, trajectory)
         loss_ary = torch.cat((loss2_ary, loss1.unsqueeze(0)), -1)
         return loss_ary
