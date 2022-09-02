@@ -4,7 +4,7 @@ this paper learns skills from "initial state and last state pair"
 
 $$1. \ sample \ skill \ from \ p(z)$$
 
-$$2. \ step \ one \ step \ in \ environment$$
+$$2. \ simulate \ in \ environment \ while \ memory \ become \ full$$
 
 $$3. \ compute \ q_\phi(z | s_0, s_t)\ and \ q_\phi(z | s_0, s_0) \ from \ discriminator \ q_\phi$$
 
