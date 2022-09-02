@@ -1,6 +1,6 @@
 from policy import gps, AC, DDPG, PG, PPO, SAC, TRPO
 from utils import render, train
-from control import diayn
+from control import diayn, dads, vic, valor, visr, edl, smm, aps, cic
 import gym
 from utils import converter
 import torch
@@ -123,9 +123,9 @@ if __name__ == "__main__":
 
     arg_list = [learning_rate, skill_num, TRAIN_ITER, MEMORY_ITER, STATE_LENGTH, ACTION_LENGTH,
                 A_index_L, my_converter, DEVICE]
-    model_type = 2
+    model_type = 1
 
-    if model_type == 2:
+    if model_type == 1:
         valid = 0
         while valid == 0:
             print("enter RL policy, {PG, AC, TRPO, PPO, DDPG, SAC}")
@@ -150,7 +150,7 @@ if __name__ == "__main__":
                 valid = 1
             else:
                 print("error")
-    else:
+    elif model_type == 2:
         valid = 0
         while valid == 0:
             print("enter RL policy, {gps}")
@@ -160,13 +160,39 @@ if __name__ == "__main__":
                 valid = 1
             else:
                 print("error")
-
+    else:
+        print("error")
+        
     valid = 0
     while valid == 0:
         print("enter RL control, {diayn}")
         control_name = input("->")
         if control_name == "diayn":
             control = diayn.DIAYN(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "dads":
+            control = dads.DADS(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "vic":
+            control = vic.VIC(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "valor":
+            control = smm.SMM(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "visr":
+            control = edl.EDL(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "edl":
+            control = valor.VALOR(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "smm":
+            control = visr.VISR(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "aps":
+            control = aps.APS(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "cic":
+            control = cic.CIC(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
             valid = 1
         else:
             print("control name error")
