@@ -50,14 +50,14 @@ class GPS(BASE.BasePolicy):
             self.m_i = 1
         while i < self.m_i:
             # print(i)
-            n_p_o, n_a, n_o, n_r, n_d, sk_idx = np.squeeze(trajectory)
-            t_p_o = torch.tensor(n_p_o, dtype=torch.float32).to(self.device)
+            n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
+            t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
-            t_o = torch.tensor(n_o, dtype=torch.float32).to(self.device)
+            t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
-            sa_in = torch.cat((t_p_o, t_a), dim=-1)
+            sa_in = torch.cat((t_p_s, t_a), dim=-1)
             predict_o = self.Dynamics(sa_in)
-            dyn_loss = self.criterion(t_o, predict_o) + self.Dynamics.kld_loss()
+            dyn_loss = self.criterion(t_s, predict_o) + self.Dynamics.kld_loss()
 
             predict_r = self.R_NAF.sa_reward(sa_in)
             print(predict_r)

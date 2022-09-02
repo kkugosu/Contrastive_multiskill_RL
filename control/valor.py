@@ -1,5 +1,3 @@
-
-from utils import converter
 import torch
 from NeuralNetwork import basic_nn
 import numpy as np
@@ -12,7 +10,7 @@ class VALOR(BASE.BaseControl):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "valor"
-        self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l * self.sk_n, self.sk_n).to(self.device)
+        self.discriminator = basic_nn.ProbNN(self.s_l, self.s_l + self.sk_n, self.sk_n).to(self.device)
         # hidden state -> skill
         self.bid_lstm = nn.LSTM(input_size=self.s_l, hidden_size=self.s_l, bidirectional=True).to(self.device)
         # state_seq -> hidden state
