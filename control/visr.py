@@ -24,26 +24,27 @@ class VISR(BASE.BaseControl):
         tmp = torch.zeros((len(t_p_s), sa_len * self.sk_n))
         i = 0
         while i < len(t_p_s):
-            tmp[i][sk_idx[i] * sa_len: (sk_idx[i] + 1) * sa_len] = torch.cat((t_p_s[i], t_a[i]), 0)
+            tmp[i][sk_idx[i] * sa_len: (sk_idx[i] + 1) * sa_len] = torch.cat((t_p_s[i], t_a[i]), -1)
             i = i + 1
         # how can i use scatter in here?
         tmp = tmp.type(torch.float32).to(self.device)
-        main_value = self.discriminator(tmp)
+        main_value = self.discriminator(tmp).squeeze()
 
-        tmp = torch.zeros((len(t_p_s), self.sk_n, (self.s_l + self.a_l) * self.sk_n))
+        tmp = torch.zeros((len(t_p_s), self.sk_n, sa_len * self.sk_n))
         i = 0
         while i < len(n_p_s):
             j = 0
             while j < self.sk_n:
-                tmp[i][j * sa_len: (j + 1) * sa_len] = torch.cat((t_p_s[i], t_a[i]), 0)
+
+                tmp[i][j][j * sa_len: (j + 1) * sa_len] = torch.cat((t_p_s[i], t_a[i]), -1)
                 j = j + 1
             i = i + 1
         tmp = tmp.type(torch.float32).to(self.device)
-        sub_prob = self.discriminator(tmp)
+        sub_prob = self.discriminator(tmp).squeeze()
         contrast_value = torch.sum(sub_prob, dim=-1)
 
-        re = main_value - contrast_value
-        return re
+        re = torch.log(main_value / contrast_value)
+        return re.squeeze()
 
     def update(self, memory_iter, *trajectory):
         i = 0
@@ -53,7 +54,7 @@ class VISR(BASE.BaseControl):
             i = i + 1
             loss2_ary = self.policy.update(1, trajectory)
             out = self.reward(trajectory)
-            loss1 = - torch.sum(torch.log(out))
+            loss1 = - torch.sum(out)
             self.optimizer.zero_grad()
             loss1.backward()
             for param in self.discriminator.parameters():
