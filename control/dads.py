@@ -27,23 +27,23 @@ class DADS(BASE.BaseControl):
             i = i + 1
         # how can i use scatter in here?
         tmp = tmp.type(torch.float32).to(self.device)
-        main_prob = torch.exp(-torch.sum(torch.square(t_s - self.discriminator(tmp)), dim=-1))
-
+        main_prob = torch.exp(-torch.sum(torch.square(t_s - self.discriminator(tmp)), dim=-1)).squeeze()
+        # batch * 1
         tmp = torch.zeros((len(t_p_s), self.sk_n, self.s_l * self.sk_n))
         i = 0
         while i < len(n_p_s):
             j = 0
             while j < self.sk_n:
-                tmp[i][j * self.s_l:(j + 1) * self.s_l] = n_p_s[i]
+                tmp[i][j][j * self.s_l:(j + 1) * self.s_l] = t_p_s[i]
                 j = j + 1
             i = i + 1
         tmp = tmp.type(torch.float32).to(self.device)
-        sub_prob = torch.exp(-torch.sum(torch.square(t_s - self.discriminator(tmp)), dim=-1))
-        contrast_prob = torch.sum(sub_prob, dim=-1)
+        sub_prob = torch.exp(-torch.sum(torch.square(t_s.unsqueeze(-2) - self.discriminator(tmp)), dim=-1))
+        contrast_prob = torch.sum(sub_prob, dim=-1).squeeze()
 
-        re = main_prob/contrast_prob
+        re = (main_prob+0.00000000001)/(contrast_prob+0.00000000001)
         re = re.squeeze()
-        return re
+        return torch.log(re)
 
     def update(self, memory_iter, *trajectory):
         i = 0
@@ -53,7 +53,8 @@ class DADS(BASE.BaseControl):
             i = i + 1
             loss2_ary = self.policy.update(1, trajectory)
             out = self.reward(trajectory)
-            loss1 = - torch.sum(torch.log(out))
+            loss1 = - torch.sum(out)
+            print(loss1)
             self.optimizer.zero_grad()
             loss1.backward()
             for param in self.discriminator.parameters():
