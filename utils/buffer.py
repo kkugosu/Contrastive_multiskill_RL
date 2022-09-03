@@ -45,7 +45,6 @@ class Memory:
                     failure = failure + 1
                     break
             pause = t
-        print("simulate complete")
         if pretrain == 1:
             with torch.no_grad():
                 reward = self.control.reward(next(iter(self.dataloader)))
@@ -53,14 +52,14 @@ class Memory:
         else:
             pass
         pre_observation, action, observation, reward, done, skill_idx = next(iter(self.dataloader))
-        total_performance = torch.sum(reward)
+        total_performance = np.sum(reward)
         self.performance = total_performance / failure
         self._reward_converter()
         return self.performance
 
     def reward_converter(self, _reward):
         pre_observation, action, observation, reward, done, skill_idx = next(iter(self.dataloader))
-        reward = _reward
+        reward = _reward.cpu().numpy()
         global_index = 0
         while global_index < len(done):
             self.dataset.push(pre_observation[global_index], action[global_index], observation[global_index],

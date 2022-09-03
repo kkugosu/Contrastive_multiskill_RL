@@ -33,12 +33,17 @@ class BasePolicy(metaclass=ABCMeta):
         self.converter = _converter
         self.device = device
 
-    def skill_state_converter(self, n_p_o, index):
-        tmp_n_p_o = np.zeros(len(n_p_o) * self.sk_n)
-        tmp_n_p_o[index * len(n_p_o):(index + 1) * len(n_p_o)] = n_p_o
-        n_p_o = tmp_n_p_o
+    def skill_state_converter(self, n_p_o, index, per_one):
+        if per_one == 1:
+            tmp_n_p_o = np.zeros(len(n_p_o) * self.sk_n)
+            tmp_n_p_o[index * len(n_p_o):(index + 1) * len(n_p_o)] = n_p_o
+            n_p_o = tmp_n_p_o
+        else:
+            tmp_n_p_o = np.zeros((len(n_p_o), len(n_p_o[0]) * self.sk_n))
+            i = 0
+            while i < len(n_p_o):
+                tmp_n_p_o[i][index[i] * len(n_p_o[0]):(index[i] + 1) * len(n_p_o[0])] = n_p_o[i]
+                i = i + 1
+            n_p_o = tmp_n_p_o
         return n_p_o
-
-
-
 

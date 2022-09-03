@@ -18,7 +18,7 @@ class DDPGPolicy(BASE.BasePolicy):
         self.policy_name = "DDPG"
 
     def action(self, n_s, index, per_one=1):
-        n_s = self.skill_state_converter(n_s, index)
+        n_s = self.skill_state_converter(n_s, index, per_one=per_one)
         t_s = torch.from_numpy(n_s).type(torch.float32).to(self.device)
         with torch.no_grad():
             t_a = self.upd_policy(t_s)
@@ -37,7 +37,7 @@ class DDPGPolicy(BASE.BasePolicy):
             self.m_i = 1
         while i < self.m_i:
             n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
-            n_p_s = self.skill_state_converter(n_p_s, sk_idx)
+            n_p_s = self.skill_state_converter(n_p_s, sk_idx, per_one=0)
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a = torch.tensor(n_a, dtype=torch.float32).to(self.device)
             t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
@@ -49,10 +49,12 @@ class DDPGPolicy(BASE.BasePolicy):
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
-                n_a_expect = self.action(t_s)
+                n_a_expect = self.action(n_s, sk_idx, per_one=0)
                 t_a_expect = torch.tensor(n_a_expect).to(self.device)
+                n_s = self.skill_state_converter(n_s, sk_idx, per_one=0)
+                t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
                 dqn_input = torch.cat((t_s, t_a_expect), dim=-1)
-                t_qvalue = self.base_queue(dqn_input)*(GAMMA**t_trace) + t_r.unsqueeze(-1)
+                t_qvalue = self.base_queue(dqn_input)*(GAMMA**t_trace) + t_r.unsqueeze
 
             queue_loss = self.criterion(t_p_qvalue, t_qvalue)
 

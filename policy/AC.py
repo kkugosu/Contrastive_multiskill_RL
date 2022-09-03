@@ -18,7 +18,7 @@ class ACPolicy(BASE.BasePolicy):
         self.policy_name = "AC"
 
     def action(self, n_s, index, per_one=1):
-        n_s = self.skill_state_converter(n_s, index)
+        n_s = self.skill_state_converter(n_s, index, per_one=per_one)
         t_s = torch.from_numpy(n_s).type(torch.float32).to(self.device)
         with torch.no_grad():
             probability = self.upd_policy(t_s)
@@ -43,10 +43,11 @@ class ACPolicy(BASE.BasePolicy):
         while i < self.m_i:
             # print(i)
             n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory) # next(iter(self.dataloader))
-            n_p_s = self.skill_state_converter(n_p_s, sk_idx)
+            n_p_s = self.skill_state_converter(n_p_s, sk_idx, per_one=0)
+
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a_index = self.converter.act2index(n_a).unsqueeze(axis=-1)
-            t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
+
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)
             t_p_weight = torch.gather(self.upd_policy(t_p_s), 1, t_a_index)
             t_p_qvalue = torch.gather(self.upd_queue(t_p_s), 1, t_a_index)
@@ -55,10 +56,12 @@ class ACPolicy(BASE.BasePolicy):
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
-                n_a_expect = self.action(t_s, 0)
+                n_a_expect = self.action(n_s, sk_idx, per_one=0)
                 t_a_index = self.converter.act2index(n_a_expect).unsqueeze(-1)
+                n_s = self.skill_state_converter(n_s, sk_idx, per_one=0)
+                t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
                 t_qvalue = torch.gather(self.base_queue(t_s), 1, t_a_index)
-                t_qvalue = t_qvalue*(GAMMA**t_trace) + t_r.unsqueeze(-1)
+                t_qvalue = t_qvalue*(GAMMA**t_trace) + t_r
 
             queue_loss = self.criterion(t_p_qvalue, t_qvalue)
 

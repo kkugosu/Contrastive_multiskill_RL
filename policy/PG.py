@@ -16,7 +16,7 @@ class PGPolicy(BASE.BasePolicy):
         self.policy_name = "PG"
 
     def action(self, n_s, index, per_one=1):
-        n_s = self.skill_state_converter(n_s, index)
+        n_s = self.skill_state_converter(n_s, index, per_one=per_one)
         t_s = torch.from_numpy(n_s).type(torch.float32).to(self.device)
         with torch.no_grad():
             probability = self.upd_policy(t_s)
@@ -39,7 +39,7 @@ class PGPolicy(BASE.BasePolicy):
             # print(i)
 
             n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory) # next(iter(self.dataloader))
-            n_p_s = self.skill_state_converter(n_p_s, sk_idx)
+            n_p_s = self.skill_state_converter(n_p_s, sk_idx, per_one=0)
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
             t_a_index = self.converter.act2index(n_a).unsqueeze(axis=-1)
             t_r = torch.tensor(n_r, dtype=torch.float32).to(self.device)

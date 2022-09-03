@@ -20,7 +20,7 @@ class PPOPolicy(BASE.BasePolicy):
         self.policy_name = "PPO"
 
     def action(self, n_s, index, per_one=1):
-        n_s = self.skill_state_converter(n_s, index)
+        n_s = self.skill_state_converter(n_s, index, per_one=per_one)
         t_s = torch.from_numpy(n_s).type(torch.float32).to(self.device)
         with torch.no_grad():
             probability = self.upd_policy(t_s)
@@ -66,8 +66,10 @@ class PPOPolicy(BASE.BasePolicy):
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
-                n_a_expect = self.action(t_s, 0)
+                n_a_expect = self.action(n_s, sk_idx, per_one=0)
                 t_a_index = self.converter.act2index(n_a_expect).unsqueeze(-1)
+                n_s = self.skill_state_converter(n_s, sk_idx, per_one=0)
+                t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
                 t_qvalue = torch.gather(self.base_queue(t_s), 1, t_a_index)
                 t_qvalue = t_qvalue*(GAMMA**t_trace) + t_r.unsqueeze(-1)
 

@@ -28,16 +28,16 @@ class GPS(BASE.BasePolicy):
         self.policy_name = "gps"
 
     def action(self, n_s, index, per_one=1):
-        n_s = self.skill_state_converter(n_s, index)
+        n_s = self.skill_state_converter(n_s, index, per_one=per_one)
         t_s = torch.from_numpy(n_s).type(torch.float32).to(self.device)
         if random.random() < 1.1:
             with torch.no_grad():
-                t_a = self.iLQG.get_global_action(t_p_s)
+                t_a = self.iLQG.get_global_action(t_s)
             n_a = t_a.cpu().numpy()
             return n_a
         else:
             with torch.no_grad():
-                t_a = self.iLQG.get_local_action(t_p_s)
+                t_a = self.iLQG.get_local_action(t_s)
             n_a = t_a.cpu().numpy()
             return n_a
 
