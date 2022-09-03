@@ -65,12 +65,12 @@ class CIC(BASE.BaseControl):
         return loss_ary
 
     def load_model(self, path):
-        self.key.load_state_dict(torch.load(path + self.cont_name))
-        self.query.load_state_dict(torch.load(path + self.cont_name))
+        self.key.load_state_dict(torch.load(path + self.cont_name + "1"))
+        self.query.load_state_dict(torch.load(path + self.cont_name + "2"))
         self.policy.load_model(path)
 
     def save_model(self, path):
-        torch.save(self.key.state_dict(), path + self.cont_name)
-        torch.save(self.query.state_dict(), path + self.cont_name)
+        torch.save(self.key.state_dict(), path + self.cont_name + "1")
+        torch.save(self.query.state_dict(), path + self.cont_name + "2")
         models = self.policy.save_model(path)
         return (self.key, self.query) + models

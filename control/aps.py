@@ -22,10 +22,10 @@ class APS(BASE.BaseControl):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
         t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
 
-        base_batch_batch_matrix = (torch.transpose(self.key(t_p_s), -1, -2) @
-                                   self.query(t_p_s)).exp()
+        base_batch_batch_matrix = (self.key(t_p_s) @ torch.transpose(self.query(t_p_s), -1, -2))
+        diagonal = torch.from_numpy(np.arange(1000)).unsqueeze(-1).to(self.device)
+        output = torch.gather(base_batch_batch_matrix, 1, diagonal).squeeze()
 
-        output = torch.gather(base_batch_batch_matrix, 1, torch.from_numpy(np.arange(1000)).squeeze(-1).T)
         bellow = base_batch_batch_matrix.sum(-1) - output
         output = output/bellow
         loss = -torch.sum(output)
@@ -43,9 +43,11 @@ class APS(BASE.BaseControl):
         # as far as gain more advantage
         n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
         t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
-        distance_mat = torch.square(self.key(t_p_s) - torch.transpose(self.query(t_p_s), -1, -2))
+        distance_mat = torch.sum(torch.square(self.key(t_p_s).unsqueeze(0) - self.query(t_p_s).unsqueeze(1)), -1)
         with torch.no_grad():
-            sorted_mat = torch.sort(distance_mat)
+            sorted_mat, _ = torch.sort(distance_mat, 0)
+        knn_10 = sorted_mat[:10]
+        distance = torch.sum(knn_10, 0)
         t_a = torch.from_numpy(n_a).to(self.device).type(torch.float32)
         sk_idx = torch.from_numpy(sk_idx).to(self.device).type(torch.int64)
         sa_len = self.s_l + self.a_l
@@ -71,19 +73,21 @@ class APS(BASE.BaseControl):
         sub_prob = self.discriminator(tmp).squeeze()
         contrast_value = torch.sum(sub_prob, dim=-1)
 
-        re = torch.log(main_value/contrast_value)
-        return (sorted_mat[-10:-1].sum(-1) + re).squeeze()
+        re = torch.log(main_value/contrast_value).squeeze()
+
+        return distance + re
 
     def update(self, memory_iter, *trajectory):
         i = 0
         loss1 = None
         loss2_ary = None
         self.encoder_decoder_training(trajectory)
+        print("iter start")
         while i < memory_iter:
             i = i + 1
             loss2_ary = self.policy.update(1, trajectory)
             out = self.reward(trajectory)
-            loss1 = - torch.sum(torch.log(out))
+            loss1 = - torch.sum(out)
             self.optimizer.zero_grad()
             loss1.backward()
             for param in self.discriminator.parameters():
@@ -94,9 +98,13 @@ class APS(BASE.BaseControl):
 
     def load_model(self, path):
         self.discriminator.load_state_dict(torch.load(path + self.cont_name))
+        self.key.load_state_dict(torch.load(path + self.cont_name + "1"))
+        self.query.load_state_dict(torch.load(path + self.cont_name + "2"))
         self.policy.load_model(path)
 
     def save_model(self, path):
         torch.save(self.discriminator.state_dict(), path + self.cont_name)
+        torch.save(self.key.state_dict(), path + self.cont_name + "1")
+        torch.save(self.query.state_dict(), path + self.cont_name + "2")
         models = self.policy.save_model(path)
-        return (self.discriminator,) + models
+        return (self.discriminator, self.key, self.query) + models
