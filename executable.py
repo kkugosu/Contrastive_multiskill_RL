@@ -94,11 +94,11 @@ if __name__ == "__main__":
 
     print("memory reset time recommend 100")
     print("train iter = 100")
-    TRAIN_ITER = 5
+    TRAIN_ITER = 3
 
     print("train_iteration per memory recommend 10")
     print("memory iter = 10")
-    MEMORY_ITER = 4
+    MEMORY_ITER = 2
 
     print("enter learning rate recommend 0.01")
     print("learning rate = 0.0001")
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     print("num_skills?")
     print("skillnum = 10")
-    skill_num = 10
+    skill_num = 5
 
     my_converter = converter.IndexAct(env_name, ACTION_LENGTH, precision, BATCH_SIZE)
 

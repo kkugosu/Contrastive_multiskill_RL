@@ -61,6 +61,7 @@ class ACPolicy(BASE.BasePolicy):
                 t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
 
                 t_qvalue = torch.gather(self.base_queue(t_s), 1, t_a_index)
+
                 t_qvalue = t_qvalue*(GAMMA**t_trace) + t_r.unsqueeze(-1)
 
             queue_loss = self.criterion(t_p_qvalue, t_qvalue)

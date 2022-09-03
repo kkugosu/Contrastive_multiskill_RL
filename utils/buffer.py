@@ -11,7 +11,6 @@ class Memory:
         self.done_penalty = done_penalty
         self.performance = 0
         self.control = control
-        self.index = None
         self.skill_num = skill_num
         self.s_l = len(env.observation_space.sample())
         self.dataset = dataset
@@ -25,16 +24,16 @@ class Memory:
         capacity = self.capacity
         while total_num < capacity - pause:
             if index is not None:
-                self.index = index
+                _index = index
             else:
-                self.index = np.random.randint(self.skill_num)
+                _index = np.random.randint(self.skill_num)
             n_p_s = self.env.reset()
             t = 0
             while t < capacity - total_num: # if pg, gain accumulate
                 with torch.no_grad():
-                    n_a = self.control.policy.action(n_p_s, self.index)
+                    n_a = self.control.policy.action(n_p_s, _index)
                 n_s, n_r, n_d, n_i = self.env.step(n_a)
-                self.dataset.push(n_p_s, n_a, n_s, n_r, np.float32(n_d), self.index)
+                self.dataset.push(n_p_s, n_a, n_s, n_r, np.float32(n_d), _index)
                 # we need index.. so have to convert dataset
                 n_p_s = n_s
                 t = t + 1
