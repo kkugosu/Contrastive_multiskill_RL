@@ -11,9 +11,8 @@ class BasePolicy(metaclass=ABCMeta):
     s_l state length
     a_l action length
     a_index_l action index length
-    policy_name
     converter
-    env_n environment name
+    device
     """
     def __init__(self,
                  l_r,

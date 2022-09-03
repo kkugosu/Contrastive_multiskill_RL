@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     my_converter = converter.IndexAct(env_name, ACTION_LENGTH, precision, BATCH_SIZE)
 
-    arg_list = [learning_rate, skill_num, TRAIN_ITER, MEMORY_ITER, STATE_LENGTH, ACTION_LENGTH,
+    arg_list = [learning_rate, skill_num, MEMORY_ITER, STATE_LENGTH, ACTION_LENGTH,
                 A_index_L, my_converter, DEVICE]
     model_type = 1
 
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         
     valid = 0
     while valid == 0:
-        print("enter RL control, {diayn}")
+        print("enter RL control, {diayn, dads, vic, valor, visr, edl, smm, aps, cic}")
         control_name = input("->")
         if control_name == "diayn":
             control = diayn.DIAYN(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
