@@ -14,15 +14,21 @@ class SMM(BASE.BaseControl):
 
     def reward(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
-        distance = mseloss(n_p_s, n_p_s.T)
-        density = torch.exp(-distance)
-        reward = torch.sum(density) - torch.mean(density)
+
+        distance = np.square(np.repeat(np.expand_dims(n_p_s, 0), len(n_p_s), axis=0) -
+                             np.repeat(np.expand_dims(n_p_s, 1), len(n_p_s), axis=1))
+        density = np.exp(-np.sum(distance, -1))
+        density = torch.from_numpy(density).to(self.device)
+
+        reward = torch.sum(density, -1).squeeze()
+
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
         skill_idx = torch.from_numpy(skill_idx).to(self.device).type(torch.int64)
         t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
         skill_idx = skill_idx.unsqueeze(-1)
-        out = torch.gather(self.discriminator(t_p_s), 1, skill_idx)
-        return (reward + out).squeeze()
+        out = torch.gather(self.discriminator(t_p_s), 1, skill_idx).squeeze()
+
+        return - reward + torch.log(out)
 
     def update(self, memory_iter, *trajectory):
         i = 0
@@ -32,7 +38,7 @@ class SMM(BASE.BaseControl):
             i = i + 1
             loss2_ary = self.policy.update(1, trajectory)
             out = self.reward(trajectory)
-            loss1 = - torch.sum(torch.log(out))
+            loss1 = - torch.sum(out)
             self.optimizer.zero_grad()
             loss1.backward()
             for param in self.discriminator.parameters():
