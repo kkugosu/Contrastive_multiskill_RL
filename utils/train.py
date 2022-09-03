@@ -1,8 +1,5 @@
-import torch
 from utils import buffer, dataset, dataloader
 from torch.utils.tensorboard import SummaryWriter
-from control import diayn
-import numpy as np
 
 
 class Train:
@@ -22,7 +19,7 @@ class Train:
         self.data = dataset.SimData(capacity=self.capacity)
         self.dataloader = dataloader.CustomDataLoader(self.data, batch_size=self.b_s)
         self.buffer = buffer.Memory(self.env, self.cont, step_size=e_trace, done_penalty=d_p, skill_num=self.skill_num,
-                                    dataset=self.data, dataloader=self.dataloader)
+                                    capacity=self.capacity, dataset=self.data, dataloader=self.dataloader)
         self.writer = SummaryWriter('Result/' + env_n + self.cont.name())
 
         self.PARAM_PATH = 'Parameter/' + env_n
@@ -38,7 +35,7 @@ class Train:
         while i < self.t_i:
             print(i)
             i = i + 1
-            self.buffer.simulate(self.capacity, self.data, self.dataloader)
+            self.buffer.simulate(index=None, pretrain=1)
             loss = self.cont.update(self.m_i, next(iter(self.dataloader)))
             print("loss = ", loss)
             j = 0
@@ -59,7 +56,7 @@ class Train:
         maxp_index = 0
         self.cont.load_model(self.PARAM_PATH)
         while i < self.skill_num:
-            performance = self.buffer.simulate(self.capacity, self.data, self.dataloader, index=i, pretrain=0)
+            performance = self.buffer.simulate(index=i, pretrain=0)
             print(performance)
             if performance > pre_performance:
                 maxp_index = i
@@ -73,7 +70,7 @@ class Train:
         while i < self.t_i:
             print(i)
             i = i + 1
-            self.buffer.simulate(self.capacity, self.data, self.dataloader, index=maxp_index, pretrain=0)
+            self.buffer.simulate(index=maxp_index, pretrain=0)
             loss = self.policy.update(self.m_i, next(iter(self.dataloader)))
             print("loss = ", loss)
             j = 0

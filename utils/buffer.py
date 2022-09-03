@@ -5,7 +5,7 @@ GAMMA = 0.98
 
 
 class Memory:
-    def __init__(self, env, control, step_size, done_penalty, skill_num, dataset, dataloader):
+    def __init__(self, env, control, step_size, done_penalty, skill_num, capacity, dataset, dataloader):
         self.env = env
         self.step_size = step_size
         self.done_penalty = done_penalty
@@ -16,11 +16,14 @@ class Memory:
         self.s_l = len(env.observation_space.sample())
         self.dataset = dataset
         self.dataloader = dataloader
+        self.capacity = capacity
 
-    def simulate(self, capacity, index=None, pretrain=1):
+    def simulate(self, index=None, pretrain=1):
         total_num = 0
         pause = 0
         failure = 1
+        capacity = self.capacity
+
         while total_num < capacity - pause:
             if index is not None:
                 self.index = index
@@ -43,6 +46,7 @@ class Memory:
                     failure = failure + 1
                     break
             pause = t
+        print(capacity)
         if pretrain == 1:
             with torch.no_grad():
                 reward = self.control.reward(next(iter(self.dataloader)))
