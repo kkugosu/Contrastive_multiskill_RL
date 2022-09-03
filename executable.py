@@ -177,16 +177,16 @@ if __name__ == "__main__":
             control = vic.VIC(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
             valid = 1
         elif control_name == "valor":
-            control = smm.SMM(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
-            valid = 1
-        elif control_name == "visr":
-            control = edl.EDL(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
-            valid = 1
-        elif control_name == "edl":
             control = valor.VALOR(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
             valid = 1
-        elif control_name == "smm":
+        elif control_name == "visr":
             control = visr.VISR(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "edl":
+            control = edl.EDL(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
+            valid = 1
+        elif control_name == "smm":
+            control = smm.SMM(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)
             valid = 1
         elif control_name == "aps":
             control = aps.APS(learning_rate, STATE_LENGTH, ACTION_LENGTH, policy, skill_num, DEVICE)

@@ -21,20 +21,24 @@ class VALOR(BASE.BaseControl):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
         t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
         i = 0
-        skill_maybe = torch.zeros(size=(1000, self.sk_n))
+        skill_maybe = torch.zeros(size=(1000, self.sk_n)).to(self.device)
+        h0 = torch.randn(1, len(n_p_s[0])).to(self.device)
+        c0 = torch.randn(1, len(n_p_s[0])).to(self.device)
         tmp_state = None
         while i < len(n_d):
-
             if n_d[i] == 1:
                 tmp_state = None
             if tmp_state is None:
                 tmp_state = t_p_s[i].unsqueeze(0)
             else:
                 tmp_state = torch.cat((tmp_state, t_p_s[i].unsqueeze(0)), 0)
-            embedded_state = self.lstm(tmp_state)[-1]
-            skill_maybe[i] = self.discriminator(embedded_state)
+
+            embedded_state, _ = self.lstm(tmp_state, (h0, c0))
+
+            skill_maybe[i] = self.discriminator(embedded_state[-1])
             i = i + 1
-        out = torch.gather(self.discriminator(skill_maybe), 1, skill_idx)
+        skill_idx = torch.from_numpy(skill_idx).unsqueeze(-1).to(self.device)
+        out = torch.gather(skill_maybe, 1, skill_idx).squeeze()
         return torch.log(out / (1/self.sk_n))
 
     def update(self, memory_iter, *trajectory):
