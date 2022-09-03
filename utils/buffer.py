@@ -23,7 +23,6 @@ class Memory:
         pause = 0
         failure = 1
         capacity = self.capacity
-
         while total_num < capacity - pause:
             if index is not None:
                 self.index = index
@@ -51,6 +50,7 @@ class Memory:
             self.reward_converter(reward)
         else:
             pass
+
         pre_observation, action, observation, reward, done, skill_idx = next(iter(self.dataloader))
         total_performance = np.sum(reward)
         self.performance = total_performance / failure

@@ -35,7 +35,7 @@ class VALOR(BASE.BaseControl):
             skill_maybe[i] = self.discriminator(embedded_state)
             i = i + 1
         out = torch.gather(self.discriminator(skill_maybe), 1, skill_idx)
-        return torch.log(out - (1/self.sk_n))
+        return torch.log(out / (1/self.sk_n))
 
     def update(self, memory_iter, *trajectory):
         i = 0

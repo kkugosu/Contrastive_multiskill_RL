@@ -17,8 +17,8 @@ class DIAYN(BASE.BaseControl):
         skill_idx = torch.from_numpy(skill_idx).to(self.device).type(torch.int64)
         t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
         skill_idx = skill_idx.unsqueeze(-1)
-        out = torch.log(torch.gather(self.discriminator(t_p_s), 1, skill_idx) - (1/self.sk_n))
-        print(out) # nan is occured
+        out = torch.log(torch.gather(self.discriminator(t_p_s), 1, skill_idx) / (1/self.sk_n))
+        out = out.squeeze()
         return out
 
     def update(self, memory_iter, *trajectory):

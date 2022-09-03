@@ -22,7 +22,7 @@ class SMM(BASE.BaseControl):
         t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
         skill_idx = skill_idx.unsqueeze(-1)
         out = torch.gather(self.discriminator(t_p_s), 1, skill_idx)
-        return reward + out
+        return (reward + out).squeeze()
 
     def update(self, memory_iter, *trajectory):
         i = 0

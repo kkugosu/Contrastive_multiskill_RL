@@ -42,6 +42,7 @@ class DADS(BASE.BaseControl):
         contrast_prob = torch.sum(sub_prob, dim=-1)
 
         re = main_prob/contrast_prob
+        re = re.squeeze()
         return re
 
     def update(self, memory_iter, *trajectory):

@@ -44,7 +44,7 @@ class CIC(BASE.BaseControl):
         state_pair = torch.cat((t_p_s, t_s), -1)
         distance_mat = torch.square(self.key(state_pair) - self.key(state_pair).T)
         sorted_mat = torch.sort(distance_mat)
-        return sorted_mat[-10:-1].sum(-1)
+        return sorted_mat[-10:-1].sum(-1).squeeze()
 
     def update(self, memory_iter, *trajectory):
         i = 0

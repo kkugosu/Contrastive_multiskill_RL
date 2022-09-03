@@ -17,7 +17,7 @@ class EDL(BASE.BaseControl):
 
     def reward(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
-        return self.decoder(n_p_s, skill_idx)
+        return self.decoder(n_p_s, skill_idx).squeeze()
 
     def encoder_decoder_training(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)

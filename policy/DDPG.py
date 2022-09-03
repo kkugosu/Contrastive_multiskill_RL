@@ -54,7 +54,7 @@ class DDPGPolicy(BASE.BasePolicy):
                 n_s = self.skill_state_converter(n_s, sk_idx, per_one=0)
                 t_s = torch.tensor(n_s, dtype=torch.float32).to(self.device)
                 dqn_input = torch.cat((t_s, t_a_expect), dim=-1)
-                t_qvalue = self.base_queue(dqn_input)*(GAMMA**t_trace) + t_r.unsqueeze
+                t_qvalue = self.base_queue(dqn_input)*(GAMMA**t_trace) + t_r.unsqueeze(-1)
 
             queue_loss = self.criterion(t_p_qvalue, t_qvalue)
 

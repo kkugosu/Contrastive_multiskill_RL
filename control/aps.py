@@ -72,7 +72,7 @@ class APS(BASE.BaseControl):
         contrast_value = torch.sum(sub_prob, dim=-1)
 
         re = main_value - contrast_value
-        return sorted_mat[-10:-1].sum(-1) + re
+        return (sorted_mat[-10:-1].sum(-1) + re).squeeze()
 
     def update(self, memory_iter, *trajectory):
         i = 0
