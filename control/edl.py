@@ -9,15 +9,23 @@ class EDL(BASE.BaseControl):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self.cont_name = "edl"
-        self.encoder = basic_nn.ProbNN(self.s_l, self.s_l + self.sk_n, self.sk_n)
-        self.decoder = basic_nn.ProbNN(self.sk_n, self.s_l + self.sk_n, self.s_l)
+        self.encoder = basic_nn.ProbNN(self.s_l, self.s_l + self.sk_n, self.sk_n).to(self.device)
+        self.decoder = basic_nn.ProbNN(self.sk_n, self.s_l + self.sk_n, self.s_l).to(self.device)
         self.optimizer_e = torch.optim.SGD(self.encoder.parameters(), lr=self.l_r)
         self.optimizer_d = torch.optim.SGD(self.decoder.parameters(), lr=self.l_r)
         self.criterion = nn.MSELoss(reduction='mean')
 
     def reward(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
-        return self.decoder(n_p_s, skill_idx).squeeze()
+        t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
+        skill_code = torch.zeros(len(n_p_s), self.sk_n).to(self.device)
+        i = 0
+        while i < len(n_p_s):
+            skill_code[i][skill_idx[i]] = skill_code[i][skill_idx[i]] + 1.0
+            i = i + 1
+        out = self.decoder(skill_code)
+        distance = torch.sum(torch.square(t_p_s - out), -1)
+        return - distance
 
     def encoder_decoder_training(self, *trajectory):
         n_p_s, n_a, n_s, n_r, n_d, skill_idx = np.squeeze(trajectory)
@@ -49,13 +57,13 @@ class EDL(BASE.BaseControl):
         return loss_ary
 
     def load_model(self, path):
-        self.encoder.load_state_dict(torch.load(path + self.cont_name))
-        self.decoder.load_state_dict(torch.load(path + self.cont_name))
+        self.encoder.load_state_dict(torch.load(path + self.cont_name + "1"))
+        self.decoder.load_state_dict(torch.load(path + self.cont_name + "2"))
         self.policy.load_model(path)
 
     def save_model(self, path):
-        torch.save(self.encoder.state_dict(), path + self.cont_name)
-        torch.save(self.decoder.state_dict(), path + self.cont_name)
+        torch.save(self.encoder.state_dict(), path + self.cont_name + "1")
+        torch.save(self.decoder.state_dict(), path + self.cont_name + "2")
         models = self.policy.save_model(path)
         return (self.encoder, self.decoder) + models
 
