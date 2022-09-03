@@ -33,8 +33,7 @@ class Memory:
             t = 0
             while t < capacity - total_num: # if pg, gain accumulate
                 with torch.no_grad():
-                    t_p_s = torch.from_numpy(n_p_s).type(torch.float32).to(device)
-                    n_a = self.control.policy.action(t_p_s)
+                    n_a = self.control.policy.action(n_p_s, self.index)
                 n_s, n_r, n_d, n_i = self.env.step(n_a)
                 self.dataset.push(n_p_s, n_a, n_s, n_r, np.float32(n_d), self.index)
                 # we need index.. so have to convert dataset
@@ -46,7 +45,7 @@ class Memory:
                     failure = failure + 1
                     break
             pause = t
-        print(capacity)
+        print("simulate complete")
         if pretrain == 1:
             with torch.no_grad():
                 reward = self.control.reward(next(iter(self.dataloader)))

@@ -17,7 +17,9 @@ class DDPGPolicy(BASE.BasePolicy):
         self.criterion = nn.MSELoss(reduction='mean')
         self.policy_name = "DDPG"
 
-    def action(self, t_s):
+    def action(self, n_s, index, per_one=1):
+        n_s = self.skill_state_converter(n_s, index)
+        t_s = torch.from_numpy(n_s).type(torch.float32).to(self.device)
         with torch.no_grad():
             t_a = self.upd_policy(t_s)
         n_a = t_a.cpu().numpy()

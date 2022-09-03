@@ -15,7 +15,9 @@ class PGPolicy(BASE.BasePolicy):
         self.optimizer = torch.optim.SGD(self.upd_policy.parameters(), lr=self.l_r)
         self.policy_name = "PG"
 
-    def action(self, t_s, per_one=1):
+    def action(self, n_s, index, per_one=1):
+        n_s = self.skill_state_converter(n_s, index)
+        t_s = torch.from_numpy(n_s).type(torch.float32).to(self.device)
         with torch.no_grad():
             probability = self.upd_policy(t_s)
 
