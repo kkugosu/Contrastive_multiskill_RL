@@ -44,8 +44,7 @@ class APS(BASE.BaseControl):
         n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
         t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
         distance_mat = torch.sum(torch.square(self.key(t_p_s).unsqueeze(0) - self.query(t_p_s).unsqueeze(1)), -1)
-        with torch.no_grad():
-            sorted_mat, _ = torch.sort(distance_mat, 0)
+        sorted_mat, _ = torch.sort(distance_mat, 0)
         knn_10 = sorted_mat[:10]
         distance = torch.sum(knn_10, 0)
         t_a = torch.from_numpy(n_a).to(self.device).type(torch.float32)

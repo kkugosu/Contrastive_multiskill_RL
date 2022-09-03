@@ -17,11 +17,13 @@ class CIC(BASE.BaseControl):
         n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory)
         t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
         t_s = torch.from_numpy(n_s).to(self.device).type(torch.float32)
-        sk_idx = torch.from_numpy(sk_idx).to(self.device).type(torch.int64)
+        sk_idx = torch.from_numpy(sk_idx).to(self.device).type(torch.int64).unsqueeze(-1)
         state_pair = torch.cat((t_p_s, t_s), -1)
-        all_skill = torch.eye(10).expand(1000, 10, 10)
-        base_batch_batch_matrix = torch.matmul(self.key(state_pair).unsqueeze(-2), self.query(all_skill)).exp()
+        all_skill = torch.eye(self.sk_n).expand(len(n_p_s), self.sk_n, self.sk_n).to(self.device)
+
+        base_batch_batch_matrix = torch.matmul(self.key(state_pair).unsqueeze(-2), self.query(all_skill)).squeeze()
         output = torch.gather(base_batch_batch_matrix, 1, sk_idx)
+
         bellow = base_batch_batch_matrix.sum(-1) - output
         # size = batchsize*1
         output = output/bellow
@@ -42,9 +44,14 @@ class CIC(BASE.BaseControl):
         t_p_s = torch.from_numpy(n_p_s).to(self.device).type(torch.float32)
         t_s = torch.from_numpy(n_s).to(self.device).type(torch.float32)
         state_pair = torch.cat((t_p_s, t_s), -1)
-        distance_mat = torch.square(self.key(state_pair) - self.key(state_pair).T)
-        sorted_mat = torch.sort(distance_mat)
-        return sorted_mat[-10:-1].sum(-1).squeeze()
+
+        distance_mat = torch.sum(torch.square(self.key(state_pair).unsqueeze(0) -
+                                              self.key(state_pair).unsqueeze(1)), -1)
+        sorted_mat, _ = torch.sort(distance_mat, 0)
+        knn_10 = sorted_mat[:10]
+        distance = torch.sum(knn_10, 0)
+
+        return distance
 
     def update(self, memory_iter, *trajectory):
         i = 0
@@ -55,7 +62,7 @@ class CIC(BASE.BaseControl):
             i = i + 1
             loss2_ary = self.policy.update(1, trajectory)
             out = self.reward(trajectory)
-            loss1 = - torch.sum(torch.log(out))
+            loss1 = - torch.sum(out)
             self.key_optimizer.zero_grad()
             loss1.backward()
             for param in self.key.parameters():
