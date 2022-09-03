@@ -22,7 +22,7 @@ class ACPolicy(BASE.BasePolicy):
         t_s = torch.from_numpy(n_s).type(torch.float32).to(self.device)
         with torch.no_grad():
             probability = self.upd_policy(t_s)
-
+        print(probability.size())
         t_a_index = torch.multinomial(probability, 1)
         if per_one == 0:
             n_a = self.converter.index2act(t_a_index.squeeze(-1), per_one)
@@ -41,8 +41,9 @@ class ACPolicy(BASE.BasePolicy):
         else:
             self.m_i = 1
         while i < self.m_i:
-            # print(i)
+            print(i)
             n_p_s, n_a, n_s, n_r, n_d, sk_idx = np.squeeze(trajectory) # next(iter(self.dataloader))
+
             n_p_s = self.skill_state_converter(n_p_s, sk_idx, per_one=0)
 
             t_p_s = torch.tensor(n_p_s, dtype=torch.float32).to(self.device)
@@ -56,6 +57,7 @@ class ACPolicy(BASE.BasePolicy):
             t_trace = torch.tensor(n_d, dtype=torch.float32).to(self.device).unsqueeze(-1)
 
             with torch.no_grad():
+                print("insert")
                 n_a_expect = self.action(n_s, sk_idx, per_one=0)
                 t_a_index = self.converter.act2index(n_a_expect).unsqueeze(-1)
                 n_s = self.skill_state_converter(n_s, sk_idx, per_one=0)
