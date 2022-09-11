@@ -15,4 +15,6 @@ $$4. \ improve \ value \ log(q_\phi(z | s, a)) \ by \ update \ \phi$$
 
 $$5. \ set \ reward \ as \ log(q_\phi(z | s, a)) + entropy(s))$$
 
+$$ entropy(s) \ is \ result \ of \ 3 $$
+
 $$6. \ update \ sac \ with \ policy \ z \ to \ maximize \ reward$$
