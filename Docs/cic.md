@@ -7,8 +7,8 @@ $$1. \ sample \ skill \ from \ p(z)$$
 
 $$2. \ simulate \ in \ environment \ while \ memory \ become \ full$$
 
-$$3. \ learn \ "current state and next state pair" \  embedding \ from \ key \ and \ query \ network$$
+$$3. \ learn \ "state \ pair \ and \ skill" \  embedding \ from \ key \ and \ query \ network$$
 
-$$4. \ set \ reward \ as \  entropy(s, s')$$
+$$4. \ set \ reward \ as \  entropy(s_pair, s_pair') + log(p(pair|skill))$$
 
 $$5. \ update \ sac \ with \ policy \ z \ to \ maximize \ reward$$
