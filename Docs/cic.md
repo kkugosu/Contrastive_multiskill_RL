@@ -9,6 +9,6 @@ $$2. \ simulate \ in \ environment \ while \ memory \ become \ full$$
 
 $$3. \ learn \ "state \ pair \ and \ skill" \  embedding \ from \ key \ and \ query \ network$$
 
-$$4. \ set \ reward \ as \  entropy(s_pair, s_pair') + log(p(pair|skill))$$
+$$4. \ set \ reward \ as \  entropy(s_(pair), s_(pair)') + log(p(s_(pair)|skill))$$
 
 $$5. \ update \ sac \ with \ policy \ z \ to \ maximize \ reward$$
