@@ -5,7 +5,7 @@ we embed state to abstract state and maximize entropy from state distribution an
 
 $$1. \ sample \ skill \ from \ p(z)$$
 
-$$2. \ simulate \ in \ environment \ while \ memory \ become \ full$$
+$$2. \ simulate \ in \ environment \ until \ memory \ become \ full$$
 
 $$3. \ learn \ state \ embedding \ from \ key \ and \ query \ network$$
 
