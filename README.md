@@ -1,4 +1,4 @@
-# RL_META
+[![Torch Version](https://img.shields.io/badge/torch>=1.10.0-61DAFB.svg?style=flat-square)](#torch) [![Torchvision Version](https://img.shields.io/badge/torchvision>=0.2.2-yellow.svg?style=flat-square)](#torchvision) [![Python Version](https://img.shields.io/badge/python->=3.6-blue.svg?style=flat-square)](#python) 
 
 ## Installation
 ```
