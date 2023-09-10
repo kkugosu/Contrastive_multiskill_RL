@@ -3,7 +3,7 @@
 [![Python Version](https://img.shields.io/badge/python->=3.6-blue.svg?style=flat-square)](#python)
 
 
-# RL_META: Meta Reinforcement Learning 
+# Contrastive RL: Multi skill Reinforcement Learning 
 
 
 ## 🚀 Installation
